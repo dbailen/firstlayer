@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FirstLayer — AutoCAD Drawing Preparer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+/* ============================================
+   THEME VARIABLES — matching App.css language
+   ============================================ */
+:root {
+  --bg-gradient-start: #e8f0f9;
+  --bg-gradient-end:   #c8ddf0;
+  --surface:           #ffffff;
+  --surface2:          #f4f7fb;
+  --surface3:          #eaeff6;
+  --text:              #1a2332;
+  --text2:             #4a5568;
+  --text3:             #8a9ab0;
+  --border:            #cdd5e0;
+  --border2:           #b8c4d4;
+  --accent:            #0082d8;
+  --accent-text:       #01579b;
+  --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+}
+
+/* Tab area color washes — matches App.css tab-area system */
+:root {
+  --tab-layers-bg:  rgba(100,195,255,.24);  --tab-layers-border:  #0082d8; --tab-layers-color:  #01579b; --tab-layers-pill: #80d4ff;
+  --tab-import-bg:  rgba(80,255,220,.24);  --tab-import-border:  #00b098; --tab-import-color:  #00796b; --tab-import-pill: #80ffe5;
+  --tab-styles-bg:  rgba(195,150,255,.24);  --tab-styles-border:  #6a35ff; --tab-styles-color:  #4a148c; --tab-styles-pill: #d4b3ff;
+  --tab-lisp-bg:    rgba(255,150,110,.24);  --tab-lisp-border:    #f55e00; --tab-lisp-color:    #d84315; --tab-lisp-pill: #ffab91;
+  --tab-scr-bg:     rgba(195,195,195,.24);  --tab-scr-border:     #757575; --tab-scr-color:     #424242; --tab-scr-pill: #d4d4d4;
+}
+
+/* ============================================
+   RESET
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+  background: radial-gradient(ellipse at top, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  display: flex;
+  flex-direction: column;
+}
+h1,h2,h3,h4 { font-family: var(--mono); font-weight: 700; }
+
+/* ============================================
+   HEADER
+   ============================================ */
+header {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
+  border-bottom: 2px solid var(--border2);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+  z-index: 10;
+}
+.logo {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+.logo em { color: var(--text3); font-style: normal; font-weight: 400; }
+.tagline { font-size: 11px; color: var(--text3); letter-spacing: .3px; }
+.header-gap { flex: 1; }
+.ver-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent-text);
+  background: rgba(0,145,234,.1);
+  border: 1px solid rgba(0,145,234,.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-weight: 600;
+}
+
+/* ============================================
+   MAIN LAYOUT — full-bleed tabs on top
+   ============================================ */
+.app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TAB BAR ── */
+.tabbar {
+  display: flex;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  padding: 0 8px;
+  gap: 4px;
+}
+.tabbar-tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  border-radius: 6px 6px 0 0;
+  transition: all .2s ease;
+  color: var(--text3);
+  white-space: nowrap;
+  position: relative;
+}
+.tabbar-tab:hover { background: var(--surface3); color: var(--text2); }
+
+/* Active tab gets its color identity */
+.tabbar-tab.active-layers  { color: var(--tab-layers-color);  border-bottom-color: var(--tab-layers-border);  background: var(--tab-layers-bg); }
+.tabbar-tab.active-import  { color: var(--tab-import-color);  border-bottom-color: var(--tab-import-border);  background: var(--tab-import-bg); }
+.tabbar-tab.active-styles  { color: var(--tab-styles-color);  border-bottom-color: var(--tab-styles-border);  background: var(--tab-styles-bg); }
+.tabbar-tab.active-lisp    { color: var(--tab-lisp-color);    border-bottom-color: var(--tab-lisp-border);    background: var(--tab-lisp-bg); }
+.tabbar-tab.active-scr     { color: var(--tab-scr-color);     border-bottom-color: var(--tab-scr-border);     background: var(--tab-scr-bg); }
+
+/* Badge on Layers tab */
+.tab-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 5px;
+  vertical-align: middle;
+  background: var(--tab-layers-pill);
+  color: var(--tab-layers-color);
+}
+
+/* ── TAB CONTENT AREA ── */
+.tab-pane {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: column;
+}
+.tab-pane.visible { display: flex; }
+
+/* Each pane gets a color wash on its background */
+.tab-pane.pane-layers { background: linear-gradient(145deg, rgba(100,195,255,.15), rgba(40,170,255,.08)); }
+.tab-pane.pane-import { background: linear-gradient(145deg, rgba(80,255,220,.15), rgba(40,225,200,.08)); }
+.tab-pane.pane-styles { background: linear-gradient(145deg, rgba(195,150,255,.15), rgba(160,110,255,.08)); }
+.tab-pane.pane-lisp   { background: linear-gradient(145deg, rgba(255,150,110,.15), rgba(255,115,75,.08)); }
+.tab-pane.pane-scr    { background: linear-gradient(145deg, rgba(190,190,190,.15), rgba(165,165,165,.08)); }
+
+/* ============================================
+   LAYERS PANE — sidebar + table split
+   ============================================ */
+.layers-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+.layers-sidebar {
+  background: rgba(255,255,255,.7);
+  backdrop-filter: blur(4px);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.layers-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR SECTIONS ── */
+.sg { border-bottom: 1px solid var(--border); }
+.sg-head {
+  padding: 9px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: color .15s;
+}
+.sg-head:hover { color: var(--text2); }
+.sg-head.open { color: var(--tab-layers-color); }
+.sg-head .chv { font-size: 9px; transition: transform .2s; }
+.sg-head.open .chv { transform: rotate(90deg); }
+.sg-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.sg-body.closed { display: none; }
+
+/* ── FORM CONTROLS ── */
+label.lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: .4px;
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+select, input[type=text], input[type=number], textarea {
+  width: 100%;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  font-weight: 500;
+}
+select:focus, input:focus, textarea:focus {
+  border-color: var(--tab-layers-border);
+  box-shadow: 0 0 0 3px rgba(0,145,234,.1);
+}
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.r3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.field { display: flex; flex-direction: column; }
+.hint { font-size: 10px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+.ck-row { display: flex; align-items: center; gap: 8px; }
+.ck-row input[type=checkbox] { width: auto; accent-color: var(--accent); }
+.ck-row label { font-size: 11px; color: var(--text2); cursor: pointer; margin: 0; }
+
+/* ── GENERATE BUTTON ── */
+.gen-btn {
+  margin: 12px 14px 14px;
+  padding: 10px;
+  background: linear-gradient(135deg, #0091ea, #0064b0);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 3px 10px rgba(0,145,234,.3);
+}
+.gen-btn:hover { background: linear-gradient(135deg, #00a8ff, #0078d4); box-shadow: 0 4px 14px rgba(0,145,234,.4); }
+.gen-btn:active { transform: translateY(1px); box-shadow: none; }
+
+/* ── LAYER TABLE ── */
+.tbar {
+  padding: 8px 12px;
+  background: rgba(255,255,255,.6);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.tbar-info { font-family: var(--mono); font-size: 10px; color: var(--text3); flex: 1; font-weight: 600; }
+.tbtn {
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border2);
+  background: linear-gradient(145deg, #ffffff, #f0f4f8);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.tbtn:hover { border-color: var(--accent); color: var(--accent-text); background: rgba(0,145,234,.05); }
+.tbtn.pri {
+  background: linear-gradient(135deg, #0091ea, #0064b0);
+  border-color: #0091ea;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,145,234,.25);
+}
+.tbtn.pri:hover { background: linear-gradient(135deg, #00a8ff, #0078d4); }
+.tbtn.warn { border-color: #e53935; color: #c62828; }
+.tbtn.warn:hover { background: rgba(229,57,53,.08); }
+
+.pal-btn { font-size:10px; padding:4px 9px; }
+.pal-btn.pal-active { background:linear-gradient(135deg,#0082d8,#005fa8)!important; border-color:#0082d8!important; color:#fff!important; }
+
+
+.layer-scroll { flex: 1; overflow: auto; }
+table.lt {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+table.lt th {
+  background: rgba(255,255,255,.8);
+  color: var(--text3);
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-weight: 700;
+}
+table.lt td {
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(0,0,0,.04);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+table.lt tr.edited td { background: rgba(0,145,234,.04); }
+table.lt tr:hover td { background: rgba(0,145,234,.06); }
+
+.swatch {
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+  border: 1.5px solid rgba(0,0,0,.15);
+  cursor: pointer;
+  transition: transform .1s, box-shadow .1s;
+  flex-shrink: 0;
+}
+.swatch:hover { transform: scale(1.3); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.ln-name { color: #0064b0; font-weight: 600; }
+.ln-desc { color: var(--text3); font-size: 10px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.lt-pill {
+  font-size: 9px;
+  background: rgba(0,145,234,.1);
+  border: 1px solid rgba(0,145,234,.2);
+  border-radius: 10px;
+  padding: 1px 7px;
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.lw-pill { font-size: 10px; color: #2e7d32; font-weight: 600; }
+.ci-num { font-size: 10px; color: var(--text3); }
+.row-edit-btn {
+  background: none; border: none;
+  color: var(--text3); cursor: pointer;
+  font-size: 12px; padding: 2px 5px;
+  border-radius: 4px; font-family: var(--mono);
+  transition: color .15s;
+}
+.row-edit-btn:hover { color: var(--accent); background: rgba(0,145,234,.08); }
+.row-del-btn {
+  background: none; border: none;
+  color: var(--text3); cursor: pointer;
+  font-size: 11px; padding: 2px 5px;
+  border-radius: 4px; font-family: var(--mono);
+}
+.row-del-btn:hover { color: #e53935; background: rgba(229,57,53,.08); }
+
+/* ── INLINE EDIT ROW ── */
+.edit-row td { background: rgba(0,145,234,.06) !important; border-top: 1px solid rgba(0,145,234,.3); border-bottom: 1px solid rgba(0,145,234,.3); }
+.edit-row input[type=text] {
+  background: #fff; border: 1.5px solid var(--accent);
+  color: var(--text); padding: 3px 6px;
+  border-radius: 4px; font-family: var(--mono);
+  font-size: 11px; width: 100%; outline: none;
+}
+.edit-row select {
+  background: #fff; border: 1.5px solid var(--border);
+  color: var(--text); padding: 3px 5px;
+  border-radius: 4px; font-family: var(--mono); font-size: 10px;
+}
+.ci-input { width: 52px !important; }
+.name-input { width: 140px !important; }
+
+/* ── ACI COLOR PICKER POPUP ── */
+#color-popup {
+  position: fixed; z-index: 100;
+  background: #fff;
+  border: 2px solid var(--border2);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
+  display: none; flex-direction: column; gap: 8px;
+  width: 232px;
+}
+#color-popup.show { display: flex; }
+.cp-title { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: .5px; font-weight: 700; }
+.aci-grid { display: grid; grid-template-columns: repeat(16,1fr); gap: 2px; }
+.aci-cell {
+  width: 100%; aspect-ratio: 1;
+  border-radius: 2px; cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform .1s;
+}
+.aci-cell:hover { transform: scale(1.5); z-index: 1; position: relative; }
+.aci-cell.sel { border-color: #000; transform: scale(1.2); }
+.cp-custom { display: flex; gap: 6px; align-items: center; }
+.cp-custom input { flex: 1; }
+.cp-btns { display: flex; gap: 6px; }
+
+/* ============================================
+   IMPORT PANE
+   ============================================ */
+.import-wrap {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow: auto;
+  max-width: 760px;
+}
+.import-wrap h3 {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--tab-import-color);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.import-wrap p { font-size: 12px; color: var(--text2); line-height: 1.7; }
+.import-wrap code {
+  font-family: var(--mono);
+  color: var(--text);
+  background: rgba(0,191,165,.1);
+  border: 1px solid rgba(0,191,165,.2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.import-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+#import-msg { font-family: var(--mono); font-size: 11px; color: #2e7d32; min-height: 18px; }
+.add-row { display: grid; grid-template-columns: 1fr 72px 1fr 90px auto; gap: 8px; align-items: end; }
+
+/* ============================================
+   STYLES PANE
+   ============================================ */
+.styles-pane {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+.styles-scroll { flex: 1; overflow: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; max-width: 900px; }
+.styles-section-head {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tab-styles-color);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 0 0 6px 0;
+  border-bottom: 2px solid rgba(124,77,255,.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scard {
+  background: rgba(255,255,255,.75);
+  border: 1.5px solid rgba(124,77,255,.2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+.scard h3 {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tab-styles-color);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.scard .del-style {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: none; border: none;
+  color: var(--text3); cursor: pointer;
+  font-size: 13px; border-radius: 4px; padding: 2px 5px;
+}
+.scard .del-style:hover { color: #e53935; background: rgba(229,57,53,.08); }
+.sprop { display: flex; gap: 8px; margin-bottom: 5px; font-family: var(--mono); font-size: 11px; }
+.sprop .k { color: var(--text3); width: 130px; flex-shrink: 0; font-weight: 600; }
+.sprop .v { color: #7c4dff; font-weight: 600; }
+.sprv {
+  margin-top: 10px; padding: 12px 14px;
+  background: linear-gradient(145deg, #fff, #f8f4ff);
+  border-radius: 6px;
+  border: 1px solid rgba(124,77,255,.12);
+}
+.dcard {
+  background: rgba(255,255,255,.75);
+  border: 1.5px solid rgba(124,77,255,.2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+.dcard h3 { font-family: var(--mono); font-size: 10px; color: var(--tab-styles-color); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.dv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+.add-style-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 2px dashed rgba(124,77,255,.35);
+  border-radius: var(--radius);
+  background: rgba(212,179,255,.08);
+  color: var(--tab-styles-color);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  width: 100%;
+  text-align: left;
+}
+.add-style-btn:hover { border-color: rgba(124,77,255,.6); background: rgba(212,179,255,.15); }
+/* Settings strip inside styles pane */
+.styles-settings {
+  background: rgba(255,255,255,.7);
+  border-bottom: 1px solid rgba(124,77,255,.15);
+  padding: 10px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.styles-settings .field { flex-direction: row; align-items: center; gap: 8px; }
+.styles-settings .field label.lbl { margin: 0; white-space: nowrap; }
+.styles-settings .field select, .styles-settings .field input { width: auto; }
+
+/* ============================================
+   OUTPUT PANES (LISP / SCR)
+   ============================================ */
+.out-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.out-bar {
+  padding: 9px 14px;
+  background: rgba(255,255,255,.7);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+.out-info { font-family: var(--mono); font-size: 10px; color: var(--text3); flex: 1; font-weight: 600; }
+pre.out {
+  flex: 1;
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.75;
+  white-space: pre;
+  color: var(--text);
+  background: transparent;
+}
+/* LISP syntax colouring hints */
+.pane-lisp pre.out { color: #5d2a00; }
+.pane-scr  pre.out { color: #2d3436; }
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+
+/* ── FOOTER ── */
+.app-footer {
+  flex-shrink:0;
+  background:rgba(255,255,255,.6);
+  border-top:1px solid var(--border);
+  padding:6px 24px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:10px;
+  color:var(--text3);
+  font-family:var(--mono);
+  backdrop-filter:blur(4px);
+}
+.app-footer a { color:var(--text3); text-decoration:none; transition:color .15s; }
+.app-footer a:hover { color:var(--accent); }
+.footer-logo { height:18px; opacity:.7; transition:opacity .15s; }
+.footer-logo:hover { opacity:1; }
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty { text-align: center; padding: 48px; color: var(--text3); font-family: var(--mono); font-size: 12px; }
+.empty big { display: block; font-size: 32px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="https://100doors.com" target="_blank" rel="noopener" title="100doors.com" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0">
+    <svg height="26" viewBox="0 0 110 26" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <rect x="0" y="3" width="20" height="20" rx="4" fill="#0082d8"/>
+      <text x="10" y="17" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="700" fill="#fff">1D</text>
+      <text x="28" y="18" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#4a5568">100doors</text>
+    </svg>
+  </a>
+  <div style="width:1px;height:28px;background:var(--border2);flex-shrink:0"></div>
+  <div class="logo">FIRST<em>LAYER</em></div>
+  <span class="tagline">AutoCAD Drawing Preparer &nbsp;·&nbsp; Layers · Styles · LISP / SCR</span>
+  <div class="header-gap"></div>
+  <button class="tbtn" onclick="openPresets()" style="margin-right:6px">⊞ Presets</button>
+  <span class="ver-badge">v3.0</span>
+</header>
+
+<div class="app-body">
+
+  <!-- ══════════ TAB BAR ══════════ -->
+  <div class="tabbar">
+    <div class="tabbar-tab" id="ttab-layers" onclick="showPane('layers')">
+      Layers <span id="lbadge" class="tab-badge">0</span>
+    </div>
+    <div class="tabbar-tab" id="ttab-import" onclick="showPane('import')">Import / Edit</div>
+    <div class="tabbar-tab" id="ttab-styles" onclick="showPane('styles')">Styles &amp; Dims</div>
+    <div class="tabbar-tab" id="ttab-lisp"   onclick="showPane('lisp')">LISP .lsp</div>
+    <div class="tabbar-tab" id="ttab-scr"    onclick="showPane('scr')">Script .scr</div>
+  </div>
+
+  <!-- ══════════ LAYERS PANE ══════════ -->
+  <div class="tab-pane pane-layers visible" id="pane-layers">
+    <div class="layers-layout">
+
+      <!-- Sidebar -->
+      <div class="layers-sidebar">
+
+        <div class="sg">
+          <div class="sg-head open" onclick="tog(this)">Drawing Setup <span class="chv">▶</span></div>
+          <div class="sg-body">
+            <div class="field">
+              <label class="lbl">Standard</label>
+              <select id="sel-standard" onchange="refresh()">
+                <option value="AIA">AIA — American Institute of Architects</option>
+                <option value="NCS">NCS — National CAD Standard</option>
+                <option value="ISO">ISO 13567 — International</option>
+                <option value="ANSI">ANSI — American National Standard</option>
+                <option value="Casual">Casual — Plain English Names</option>
+                <option value="Custom">Custom — Define my own prefix</option>
+              </select>
+            </div>
+            <div class="field" id="pfx-field" style="display:none">
+              <label class="lbl">Custom Prefix</label>
+              <input type="text" id="custom-prefix" value="PRJ" maxlength="10" oninput="refresh()">
+            </div>
+            <div class="field">
+              <label class="lbl">Industry</label>
+              <select id="sel-industry" onchange="refresh()">
+                <option value="Architecture">Architecture / Interior Design</option>
+                <option value="Civil">Civil / Site</option>
+                <option value="MEP">MEP — Mechanical, Electrical, Plumbing</option>
+                <option value="Structural">Structural</option>
+                <option value="LiveEvents">Live Events / Entertainment</option>
+                <option value="General">General / Multi-Discipline</option>
+              </select>
+            </div>
+            <div class="r2">
+              <div class="field">
+                <label class="lbl">Units</label>
+                <select id="sel-units" onchange="updateScales();refresh()">
+                  <option value="arch">Architectural</option>
+                  <option value="dec_in">Decimal Inches</option>
+                  <option value="dec_ft">Decimal Feet</option>
+                  <option value="metric_mm">Metric — mm</option>
+                  <option value="metric_m">Metric — m</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="lbl">Scale</label>
+                <select id="sel-scale" onchange="refresh()"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg">
+          <div class="sg-head open" onclick="tog(this)">Layers <span class="chv">▶</span></div>
+          <div class="sg-body">
+            <div class="field">
+              <label class="lbl">Layer Set</label>
+              <select id="sel-size" onchange="resetOverrides();refresh()">
+                <option value="minimal">Minimal (5–10 layers)</option>
+                <option value="standard" selected>Standard (15–25 layers)</option>
+                <option value="full">Full (30–50 layers)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl">Color Palette</label>
+              <div id="pal-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
+              <div id="pal-desc" style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4;font-family:var(--mono)"></div>
+            </div>
+            <div class="field">
+              <label class="lbl">Linetypes to Load</label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px">
+                <label class="ck-row"><input type="checkbox" id="lt-hidden" checked onchange="refresh()"> Hidden</label>
+                <label class="ck-row"><input type="checkbox" id="lt-dashed" checked onchange="refresh()"> Dashed</label>
+                <label class="ck-row"><input type="checkbox" id="lt-center" checked onchange="refresh()"> Center</label>
+                <label class="ck-row"><input type="checkbox" id="lt-phantom" checked onchange="refresh()"> Phantom</label>
+                <label class="ck-row"><input type="checkbox" id="lt-dot"    checked onchange="refresh()"> Dot</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg">
+          <div class="sg-head" onclick="tog(this)">Output Options <span class="chv">▶</span></div>
+          <div class="sg-body closed">
+            <div class="ck-row">
+              <input type="checkbox" id="chk-units" checked onchange="refresh()">
+              <label for="chk-units">Set INSUNITS in output</label>
+            </div>
+            <div class="ck-row">
+              <input type="checkbox" id="chk-zoom" checked onchange="refresh()">
+              <label for="chk-zoom">End with ZOOM Extents</label>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1"></div>
+        <button class="gen-btn" onclick="generateAll()">▶ Generate LISP + SCR</button>
+      </div><!-- /layers-sidebar -->
+
+      <!-- Layer table -->
+      <div class="layers-main">
+        <div class="tbar">
+          <span class="tbar-info" id="tbar-info">Configure and generate</span>
+          <button class="tbtn" onclick="resetOverrides()">Reset</button>
+          <button class="tbtn" onclick="showPane('import')">+ Add / Import</button>
+        </div>
+        <div class="layer-scroll">
+          <div id="layer-wrap"><div class="empty"><big>◼</big>Configure options on the left</div></div>
+        </div>
+      </div>
+
+    </div><!-- /layers-layout -->
+  </div><!-- /pane-layers -->
+
+  <!-- ══════════ IMPORT PANE ══════════ -->
+  <div class="tab-pane pane-import" id="pane-import">
+    <div class="import-wrap">
+      <div>
+        <h3>Paste CSV</h3>
+        <p>One layer per line: <code>Name, ACI Color, Linetype, Lineweight</code><br>
+        Linetype: Continuous / HIDDEN / DASHED / CENTER / PHANTOM / DOT<br>
+        Lineweight: e.g. <code>0.25mm</code> &nbsp; Example: <code>A-WALL, 5, Continuous, 0.50mm</code></p>
+      </div>
+      <div class="field">
+        <label class="lbl">CSV Input</label>
+        <textarea id="csv-input" placeholder="A-WALL, 5, Continuous, 0.50mm&#10;A-DOOR, 4, Continuous, 0.35mm&#10;..." rows="7"></textarea>
+      </div>
+      <div class="import-actions">
+        <button class="tbtn pri" onclick="importCSV()">Import (Replace All)</button>
+        <button class="tbtn" onclick="importCSV(true)">Append</button>
+        <button class="tbtn" onclick="clearCSV()">Clear</button>
+      </div>
+      <div id="import-msg"></div>
+
+      <div style="border-top:1.5px solid rgba(0,191,165,.2);padding-top:14px">
+        <h3>Add Single Layer</h3>
+        <div class="add-row">
+          <div class="field"><label class="lbl">Name</label><input type="text" id="add-name" placeholder="A-WALL"></div>
+          <div class="field"><label class="lbl">Color</label><input type="number" id="add-color" min="1" max="256" value="5"></div>
+          <div class="field">
+            <label class="lbl">Linetype</label>
+            <select id="add-lt">
+              <option>Continuous</option><option>HIDDEN</option><option>DASHED</option>
+              <option>CENTER</option><option>PHANTOM</option><option>DOT</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl">Lineweight</label>
+            <select id="add-lw">
+              <option>0.00mm</option><option>0.09mm</option><option>0.18mm</option>
+              <option>0.25mm</option><option selected>0.35mm</option>
+              <option>0.50mm</option><option>0.70mm</option><option>1.00mm</option>
+            </select>
+          </div>
+          <button class="tbtn pri" style="height:32px;margin-bottom:0;align-self:end" onclick="addSingleLayer()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /pane-import -->
+
+  <!-- ══════════ STYLES PANE ══════════ -->
+  <div class="tab-pane pane-styles" id="pane-styles">
+    <div class="styles-pane">
+
+      <!-- Settings strip — dim style controls live here -->
+      <div class="styles-settings">
+        <div class="field">
+          <label class="lbl">Dim Style Name</label>
+          <input type="text" id="txt-dim" value="STD-DIM" oninput="refresh()" style="width:120px">
+        </div>
+        <div class="field">
+          <label class="lbl">Arrow</label>
+          <select id="sel-arrow" onchange="refresh()" style="width:160px">
+            <option value="tick">Architectural Tick</option>
+            <option value="closed">Closed Filled</option>
+            <option value="dot">Dot</option>
+            <option value="open">Open Arrow</option>
+          </select>
+        </div>
+        <div class="ck-row">
+          <input type="checkbox" id="chk-metric-dim" onchange="refresh()">
+          <label for="chk-metric-dim">Force metric dim format</label>
+        </div>
+        <div style="flex:1"></div>
+        <button class="tbtn pri" onclick="generateAll()">▶ Generate</button>
+      </div>
+
+      <div class="styles-scroll" id="styles-scroll">
+        <!-- Populated by renderStyles() -->
+      </div>
+    </div>
+  </div><!-- /pane-styles -->
+
+  <!-- ══════════ LISP PANE ══════════ -->
+  <div class="tab-pane pane-lisp" id="pane-lisp">
+    <div class="out-pane">
+      <div class="out-bar">
+        <span class="out-info" id="lisp-info">Hit Generate to build .lsp</span>
+        <button class="tbtn" onclick="copyOut('lisp-out',this)">Copy</button>
+        <button class="tbtn pri" onclick="downloadOut('lisp')">↓ Download .lsp</button>
+      </div>
+      <pre class="out" id="lisp-out">; Hit Generate to build your LISP file.</pre>
+    </div>
+  </div>
+
+  <!-- ══════════ SCR PANE ══════════ -->
+  <div class="tab-pane pane-scr" id="pane-scr">
+    <div class="out-pane">
+      <div class="out-bar">
+        <span class="out-info" id="scr-info">Hit Generate to build .scr</span>
+        <button class="tbtn" onclick="copyOut('scr-out',this)">Copy</button>
+        <button class="tbtn pri" onclick="downloadOut('scr')">↓ Download .scr</button>
+      </div>
+      <pre class="out" id="scr-out">; Hit Generate to build your SCR file.</pre>
+    </div>
+  </div>
+
+
+<footer class="app-footer">
+  <a href="https://100doors.com" target="_blank" rel="noopener">
+    <svg height="18" viewBox="0 0 110 26" xmlns="http://www.w3.org/2000/svg" style="display:block;opacity:.7">
+      <rect x="0" y="3" width="20" height="20" rx="4" fill="#0082d8"/>
+      <text x="10" y="17" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="700" fill="#fff">1D</text>
+      <text x="28" y="18" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#4a5568">100doors</text>
+    </svg>
+  </a>
+  <span style="color:var(--border2)">|</span>
+  <span>FirstLayer v3.0</span>
+  <span style="color:var(--border2)">·</span>
+  <a href="https://100doors.com" target="_blank" rel="noopener">100doors.com</a>
+  <div style="flex:1"></div>
+  <span>Free tool — if it saved you time, </span><a href="https://ko-fi.com" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;margin-left:3px">pay what you want ☕</a>
+</footer>
+</div><!-- /app-body -->
+
+<!-- ACI Color Picker Popup -->
+<div id="color-popup">
+  <div class="cp-title">ACI COLOR — SELECT</div>
+  <div class="aci-grid" id="aci-grid"></div>
+  <div class="cp-custom">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:600">ACI#</span>
+    <input type="number" id="cp-manual" min="1" max="256" placeholder="1–256">
+  </div>
+  <div class="cp-btns">
+    <button class="tbtn pri" style="flex:1" onclick="applyColorPick()">Apply</button>
+    <button class="tbtn" style="flex:1" onclick="closeColorPicker()">Cancel</button>
+  </div>
+</div>
+
+
+<script>
+
+'use strict';
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+
+// Full 256-color ACI palette (sampled key colors + interpolated)
+const ACI = {};
+(function(){
+  // Seed the main 9 standard colors and key spots
+  const seed={1:'#FF0000',2:'#FFFF00',3:'#00FF00',4:'#00FFFF',5:'#0000FF',
+              6:'#FF00FF',7:'#FFFFFF',8:'#414141',9:'#808080',
+              10:'#FF3300',11:'#FF6600',12:'#FF9900',13:'#FFCC00',14:'#FFFF00',
+              15:'#CCFF00',16:'#99FF00',17:'#66FF00',18:'#33FF00',19:'#00FF00',
+              20:'#00FF33',21:'#00FF66',22:'#00FF99',23:'#00FFCC',24:'#00FFFF',
+              25:'#00CCFF',26:'#0099FF',27:'#0066FF',28:'#0033FF',29:'#0000FF',
+              30:'#FF7700',40:'#AAAA00',50:'#AA8800',51:'#884400',52:'#664400',
+              60:'#004488',70:'#003388',80:'#002266',
+              140:'#7744AA',150:'#AA88CC',210:'#334488',220:'#446633',
+              250:'#333333',251:'#555555',252:'#777777',253:'#999999',254:'#BBBBBB',255:'#DDDDDD',256:'#FFFFFF'};
+  // Fill all 256 with fallbacks
+  for(let i=1;i<=256;i++) ACI[i]=seed[i]||null;
+  // Generate the spectrum for missing values
+  const spectrum=[];
+  for(let h=0;h<360;h+=1.4) spectrum.push(h);
+  let si=0;
+  for(let i=10;i<=249;i++){
+    if(!ACI[i]){
+      const h=spectrum[si%spectrum.length]; si++;
+      const s=i<130?1:.7; const l=i<200?.5:.65;
+      ACI[i]=hslHex(h,s,l);
+    }
+  }
+  function hslHex(h,s,l){
+    const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+    let r,g,b;
+    if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}
+    else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}
+    const hex=v=>Math.round((v+m)*255).toString(16).padStart(2,'0');
+    return '#'+hex(r)+hex(g)+hex(b);
+  }
+})();
+
+function aci(n){return ACI[n]||ACI[Math.max(1,Math.min(256,n))]||'#888'}
+
+
+// ── LAYER DEFINITIONS ─────────────────────────────────
+// [suffix, description, baseColor, linetype, lineweight]
+const LAYERS={
+  Architecture:{
+    minimal:[
+      ['WALL','Walls',5,'Continuous','0.50mm'],
+      ['DOOR','Doors',4,'Continuous','0.35mm'],
+      ['GLAZ','Glazing / Windows',4,'Continuous','0.25mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    standard:[
+      ['WALL','Walls',5,'Continuous','0.50mm'],
+      ['WALL-PATT','Wall Hatch',8,'Continuous','0.09mm'],
+      ['DOOR','Doors',4,'Continuous','0.35mm'],
+      ['GLAZ','Glazing / Windows',4,'Continuous','0.25mm'],
+      ['CLNG','Ceiling / RCP',3,'HIDDEN','0.25mm'],
+      ['FLOR','Floor / Slab',8,'Continuous','0.18mm'],
+      ['FURN','Furniture',2,'Continuous','0.18mm'],
+      ['EQPM','Equipment',2,'Continuous','0.18mm'],
+      ['COLS','Columns',5,'Continuous','0.50mm'],
+      ['STRS','Stairs',5,'Continuous','0.35mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-SYMB','Symbols & Tags',3,'Continuous','0.25mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    full:[
+      ['WALL','Walls',5,'Continuous','0.50mm'],
+      ['WALL-PATT','Wall Hatch',8,'Continuous','0.09mm'],
+      ['WALL-DEMO','Demo Walls',1,'DASHED','0.35mm'],
+      ['DOOR','Doors',4,'Continuous','0.35mm'],
+      ['DOOR-DEMO','Demo Doors',1,'DASHED','0.25mm'],
+      ['GLAZ','Glazing',4,'Continuous','0.25mm'],
+      ['GLAZ-VERT','Curtain Wall',4,'Continuous','0.35mm'],
+      ['CLNG','Ceiling / RCP',3,'HIDDEN','0.25mm'],
+      ['CLNG-EQPM','Ceiling Equipment',3,'HIDDEN','0.18mm'],
+      ['FLOR','Floor / Slab',8,'Continuous','0.18mm'],
+      ['FLOR-PATT','Floor Finish',9,'Continuous','0.09mm'],
+      ['FURN','Furniture — Fixed',2,'Continuous','0.18mm'],
+      ['FURN-MOVE','Furniture — Movable',2,'Continuous','0.09mm'],
+      ['EQPM','Equipment',2,'Continuous','0.18mm'],
+      ['COLS','Columns',5,'Continuous','0.50mm'],
+      ['STRS','Stairs',5,'Continuous','0.35mm'],
+      ['ROOF','Roof / Overhang',8,'HIDDEN','0.25mm'],
+      ['SITE','Site / Property',6,'Continuous','0.35mm'],
+      ['XREF','External References',9,'Continuous','0.00mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-SYMB','Symbols & Tags',3,'Continuous','0.25mm'],
+      ['ANNO-KEYN','Keynotes',3,'Continuous','0.18mm'],
+      ['ANNO-LEGN','Legend',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+  },
+  Civil:{
+    minimal:[
+      ['PROP','Property Line',1,'Continuous','0.50mm'],
+      ['TOPO-E','Existing Contours',8,'Continuous','0.18mm'],
+      ['TOPO-P','Proposed Contours',3,'Continuous','0.25mm'],
+      ['BLDG','Building Footprint',5,'Continuous','0.35mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    standard:[
+      ['PROP','Property Line',1,'Continuous','0.50mm'],
+      ['ESMT','Easement',6,'DASHED','0.25mm'],
+      ['TOPO-E','Existing Contours',8,'Continuous','0.18mm'],
+      ['TOPO-P','Proposed Contours',3,'Continuous','0.25mm'],
+      ['BLDG','Building Footprint',5,'Continuous','0.35mm'],
+      ['ROAD-CURB','Curb & Gutter',7,'Continuous','0.35mm'],
+      ['ROAD-PVMT','Pavement',8,'Continuous','0.18mm'],
+      ['UTIL-WATR','Water Line',4,'Continuous','0.25mm'],
+      ['UTIL-SEWR','Sewer Line',2,'Continuous','0.25mm'],
+      ['UTIL-STRM','Storm Drain',6,'Continuous','0.25mm'],
+      ['UTIL-ELEC','Electrical UG',3,'Continuous','0.25mm'],
+      ['LAND-TREE','Trees',3,'Continuous','0.25mm'],
+      ['SURV','Survey / Control',1,'Continuous','0.25mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    full:[
+      ['PROP','Property Line',1,'Continuous','0.50mm'],
+      ['ESMT','Easement',6,'DASHED','0.25mm'],
+      ['ESMT-UTIL','Utility Easement',6,'PHANTOM','0.18mm'],
+      ['ROW','Right-of-Way',1,'CENTER','0.35mm'],
+      ['TOPO-E','Existing Contours Major',8,'Continuous','0.25mm'],
+      ['TOPO-E-MN','Existing Contours Minor',8,'Continuous','0.09mm'],
+      ['TOPO-P','Proposed Contours Major',3,'Continuous','0.35mm'],
+      ['TOPO-P-MN','Proposed Contours Minor',3,'Continuous','0.18mm'],
+      ['BLDG','Building Footprint',5,'Continuous','0.35mm'],
+      ['ROAD-CURB','Curb & Gutter',7,'Continuous','0.35mm'],
+      ['ROAD-PVMT','Pavement',8,'Continuous','0.18mm'],
+      ['ROAD-WALK','Sidewalk',8,'Continuous','0.18mm'],
+      ['UTIL-WATR','Water Line',4,'Continuous','0.25mm'],
+      ['UTIL-SEWR','Sanitary Sewer',2,'Continuous','0.25mm'],
+      ['UTIL-STRM','Storm Drain',6,'Continuous','0.25mm'],
+      ['UTIL-ELEC','Electrical UG',3,'Continuous','0.25mm'],
+      ['UTIL-GAS','Gas Line',1,'PHANTOM','0.25mm'],
+      ['UTIL-TELE','Telecom / Data',4,'Continuous','0.18mm'],
+      ['LAND-TREE','Trees',3,'Continuous','0.25mm'],
+      ['LAND-SHRU','Shrubs',3,'Continuous','0.18mm'],
+      ['LAND-SOD','Sod / Lawn',3,'Continuous','0.09mm'],
+      ['SURV','Survey Control',1,'Continuous','0.25mm'],
+      ['SURV-MNMT','Survey Monuments',1,'Continuous','0.35mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-ELEV','Spot Elevations',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+  },
+  MEP:{
+    minimal:[
+      ['DUCT-S','Supply Ductwork',1,'Continuous','0.35mm'],
+      ['DUCT-R','Return Ductwork',2,'Continuous','0.35mm'],
+      ['PIPE-CW','Chilled Water',4,'Continuous','0.25mm'],
+      ['ELEC-LITE','Lighting',3,'Continuous','0.18mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    standard:[
+      ['DUCT-S','Supply Ductwork',1,'Continuous','0.35mm'],
+      ['DUCT-R','Return Ductwork',2,'Continuous','0.35mm'],
+      ['DUCT-E','Exhaust Ductwork',4,'Continuous','0.25mm'],
+      ['MECH-EQPM','Mechanical Equipment',1,'Continuous','0.35mm'],
+      ['PIPE-CW','Chilled Water',4,'Continuous','0.25mm'],
+      ['PIPE-HW','Hot Water',1,'Continuous','0.25mm'],
+      ['PIPE-COND','Condensate',8,'Continuous','0.18mm'],
+      ['ELEC-PANL','Electrical Panels',2,'Continuous','0.35mm'],
+      ['ELEC-COND','Conduit',2,'Continuous','0.25mm'],
+      ['ELEC-LITE','Lighting',3,'Continuous','0.18mm'],
+      ['ELEC-FIRE','Fire Alarm',1,'Continuous','0.25mm'],
+      ['PLMB-CW','Cold Water',4,'Continuous','0.25mm'],
+      ['PLMB-HW','Hot Water Supply',1,'Continuous','0.25mm'],
+      ['PLMB-SAN','Sanitary Drain',2,'Continuous','0.25mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    full:[
+      ['DUCT-S','Supply Ductwork',1,'Continuous','0.35mm'],
+      ['DUCT-S-LNG','Supply Ductwork Lining',1,'HIDDEN','0.18mm'],
+      ['DUCT-R','Return Ductwork',2,'Continuous','0.35mm'],
+      ['DUCT-E','Exhaust Ductwork',4,'Continuous','0.25mm'],
+      ['DUCT-OA','Outside Air',3,'Continuous','0.25mm'],
+      ['MECH-EQPM','Mechanical Equipment',1,'Continuous','0.50mm'],
+      ['MECH-PIPE','Mechanical Piping',6,'Continuous','0.25mm'],
+      ['PIPE-CW','Chilled Water Supply',4,'Continuous','0.25mm'],
+      ['PIPE-CR','Chilled Water Return',4,'HIDDEN','0.25mm'],
+      ['PIPE-HWS','Hot Water Supply',1,'Continuous','0.25mm'],
+      ['PIPE-HWR','Hot Water Return',1,'HIDDEN','0.25mm'],
+      ['PIPE-COND','Condensate',8,'Continuous','0.18mm'],
+      ['PIPE-REFR','Refrigerant',6,'Continuous','0.18mm'],
+      ['ELEC-PANL','Electrical Panels',2,'Continuous','0.50mm'],
+      ['ELEC-SWBD','Switchboards / MCC',2,'Continuous','0.35mm'],
+      ['ELEC-COND','Conduit / Raceway',2,'Continuous','0.25mm'],
+      ['ELEC-LITE','Lighting Fixtures',3,'Continuous','0.18mm'],
+      ['ELEC-FIRE','Fire Alarm',1,'Continuous','0.25mm'],
+      ['ELEC-DATA','Data / Low Voltage',4,'Continuous','0.18mm'],
+      ['PLMB-CW','Cold Water',4,'Continuous','0.25mm'],
+      ['PLMB-HW','Hot Water',1,'Continuous','0.25mm'],
+      ['PLMB-SAN','Sanitary Drain',2,'Continuous','0.25mm'],
+      ['PLMB-VENT','Plumbing Vent',6,'Continuous','0.18mm'],
+      ['PLMB-FIXT','Fixtures',8,'Continuous','0.18mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-EQPM','Equipment Tags',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+  },
+  Structural:{
+    minimal:[
+      ['COLS','Columns',5,'Continuous','0.50mm'],
+      ['BEAM','Beams / Framing',4,'HIDDEN','0.35mm'],
+      ['FNDN','Foundation',8,'Continuous','0.25mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    standard:[
+      ['COLS','Columns',5,'Continuous','0.50mm'],
+      ['BEAM','Beams — Steel',4,'HIDDEN','0.35mm'],
+      ['BEAM-WD','Beams — Wood',2,'HIDDEN','0.35mm'],
+      ['BRAC','Bracing',6,'CENTER','0.25mm'],
+      ['DECK','Deck / Slab',8,'Continuous','0.18mm'],
+      ['FNDN','Foundation',8,'Continuous','0.35mm'],
+      ['FNDN-FTG','Footings',8,'HIDDEN','0.25mm'],
+      ['WALL-BRG','Bearing Walls',5,'Continuous','0.50mm'],
+      ['WALL-SHR','Shear Walls',1,'Continuous','0.35mm'],
+      ['OPNG','Openings / Holes',3,'DASHED','0.18mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-SYMB','Symbols',3,'Continuous','0.25mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    full:[
+      ['COLS','Columns — Steel',5,'Continuous','0.50mm'],
+      ['COLS-CONC','Columns — Concrete',5,'Continuous','0.50mm'],
+      ['BEAM','Beams — Steel W',4,'HIDDEN','0.35mm'],
+      ['BEAM-HSS','HSS / Tube Steel',4,'HIDDEN','0.25mm'],
+      ['BEAM-WD','Beams — Wood',2,'HIDDEN','0.35mm'],
+      ['BEAM-LVL','LVL / Engineered Wood',2,'HIDDEN','0.25mm'],
+      ['BRAC','Steel Bracing',6,'CENTER','0.25mm'],
+      ['BRAC-WD','Wood Bracing / Sheathing',2,'CENTER','0.18mm'],
+      ['DECK','Metal Deck',8,'Continuous','0.18mm'],
+      ['DECK-CONC','Concrete Slab on Deck',8,'Continuous','0.09mm'],
+      ['FNDN','Foundation Wall',8,'Continuous','0.35mm'],
+      ['FNDN-FTG','Footings',8,'HIDDEN','0.25mm'],
+      ['FNDN-PILE','Piles / Piers',9,'HIDDEN','0.25mm'],
+      ['WALL-BRG','Bearing Walls',5,'Continuous','0.50mm'],
+      ['WALL-SHR','Shear Walls',1,'Continuous','0.35mm'],
+      ['WALL-CONC','Concrete Walls',5,'Continuous','0.50mm'],
+      ['JOIST','Bar Joists / Open Web',4,'Continuous','0.18mm'],
+      ['JOIST-WD','Wood Joists',2,'Continuous','0.18mm'],
+      ['OPNG','Openings / Penetrations',3,'DASHED','0.18mm'],
+      ['EMBED','Embeds / Plates',6,'Continuous','0.25mm'],
+      ['WELD','Weld Symbols',7,'Continuous','0.18mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-SYMB','Symbols / Tags',3,'Continuous','0.25mm'],
+      ['ANNO-SKED','Schedules',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+  },
+  LiveEvents:{
+    minimal:[
+      ['STGE','Stage / Platform',5,'Continuous','0.50mm'],
+      ['LITE','Lighting',2,'Continuous','0.25mm'],
+      ['AUDI','Audio',4,'Continuous','0.25mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    standard:[
+      ['STGE','Stage / Platform',5,'Continuous','0.50mm'],
+      ['STGE-STAIR','Stage Stairs',5,'Continuous','0.35mm'],
+      ['RIGG','Rigging / Motors',1,'Continuous','0.35mm'],
+      ['RIGG-TRUSS','Truss / Ground Support',4,'Continuous','0.35mm'],
+      ['LITE-FOH','FOH Lighting',2,'Continuous','0.25mm'],
+      ['POWR','Power Distribution',1,'Continuous','0.25mm'],
+      ['AUDI','Audio / Speakers',4,'Continuous','0.25mm'],
+      ['VIDO','Video / LED',3,'Continuous','0.25mm'],
+      ['SEATING','Audience Seating',8,'Continuous','0.18mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    full:[
+      ['STGE','Stage — Main',5,'Continuous','0.50mm'],
+      ['STGE-B','B-Stage / Thrust',5,'Continuous','0.35mm'],
+      ['STGE-STAIR','Stage Stairs',5,'Continuous','0.35mm'],
+      ['STGE-DECK','Deck Surface',8,'Continuous','0.18mm'],
+      ['RIGG','Rigging Points',1,'Continuous','0.50mm'],
+      ['RIGG-TRUSS','Truss',4,'Continuous','0.35mm'],
+      ['TENT','Tent / Structure',6,'Continuous','0.35mm'],
+      ['LITE-FOH','FOH Lighting',2,'Continuous','0.25mm'],
+      ['LITE-WASH','Wash Lights',2,'Continuous','0.18mm'],
+      ['LITE-SPOT','Followspots',2,'Continuous','0.18mm'],
+      ['LITE-CIRC','Lighting Circuits',2,'HIDDEN','0.09mm'],
+      ['POWR-MAIN','Main Power',1,'Continuous','0.35mm'],
+      ['POWR-DIST','Power Distribution',1,'Continuous','0.25mm'],
+      ['AUDI-MAIN','Main PA',4,'Continuous','0.25mm'],
+      ['AUDI-FILL','Delay / Fill',4,'Continuous','0.18mm'],
+      ['AUDI-MIX','Mix Positions',4,'Continuous','0.25mm'],
+      ['VIDO-SCRN','Video Screens',3,'Continuous','0.35mm'],
+      ['VIDO-CAM','Camera Positions',3,'Continuous','0.18mm'],
+      ['DECO','Decor',6,'Continuous','0.18mm'],
+      ['SEATING','Seating',8,'Continuous','0.18mm'],
+      ['SEATING-GA','GA / Pit',8,'Continuous','0.09mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-ZONE','Zone Labels',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+  },
+  General:{
+    minimal:[
+      ['OBJ','Objects / Drawing',5,'Continuous','0.35mm'],
+      ['REF','Reference',8,'HIDDEN','0.18mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    standard:[
+      ['OBJ','Objects — Primary',5,'Continuous','0.50mm'],
+      ['OBJ-SEC','Objects — Secondary',4,'Continuous','0.35mm'],
+      ['OBJ-LITE','Objects — Light',3,'Continuous','0.18mm'],
+      ['HATCH','Hatch / Fill',8,'Continuous','0.09mm'],
+      ['REF','Reference',8,'HIDDEN','0.18mm'],
+      ['DEMO','Demo / Removal',1,'DASHED','0.25mm'],
+      ['NEW','New Work',2,'Continuous','0.35mm'],
+      ['XREF','External References',9,'Continuous','0.00mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-SYMB','Symbols',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+    full:[
+      ['OBJ','Objects — Heavy',5,'Continuous','0.50mm'],
+      ['OBJ-MED','Objects — Medium',4,'Continuous','0.35mm'],
+      ['OBJ-LITE','Objects — Light',3,'Continuous','0.25mm'],
+      ['OBJ-VTHIN','Objects — Very Light',8,'Continuous','0.18mm'],
+      ['HATCH','Hatch — Medium',8,'Continuous','0.09mm'],
+      ['HATCH-LT','Hatch — Light',9,'Continuous','0.09mm'],
+      ['REF','Reference',8,'HIDDEN','0.18mm'],
+      ['REF-GHOST','Ghost Reference',9,'Continuous','0.00mm'],
+      ['DEMO','Demo / Removal',1,'DASHED','0.35mm'],
+      ['NEW','New Work',2,'Continuous','0.35mm'],
+      ['EXIST','Existing to Remain',8,'Continuous','0.25mm'],
+      ['PROP','Proposed',3,'Continuous','0.35mm'],
+      ['XREF','External References',9,'Continuous','0.00mm'],
+      ['XREF-B','XREF Background',9,'Continuous','0.00mm'],
+      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
+      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
+      ['ANNO-SYMB','Symbols',3,'Continuous','0.18mm'],
+      ['ANNO-LEGN','Legend',3,'Continuous','0.18mm'],
+      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
+      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
+      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+    ],
+  }
+};
+
+const SCALE_OPTIONS={
+  arch:[{l:"1\"=1'-0\"",f:12},{l:"3/4\"=1'-0\"",f:16},{l:"1/2\"=1'-0\"",f:24},{l:"3/8\"=1'-0\"",f:32},{l:"1/4\"=1'-0\"",f:48},{l:"3/16\"=1'-0\"",f:64},{l:"1/8\"=1'-0\"",f:96},{l:"1/16\"=1'-0\"",f:192}],
+  dec_in:[{l:'1:1',f:1},{l:'1:2',f:2},{l:'1:4',f:4},{l:'1:8',f:8},{l:'1:16',f:16},{l:'1:32',f:32},{l:'1:64',f:64}],
+  dec_ft:[{l:'1:1',f:1},{l:'1:2',f:2},{l:'1:5',f:5},{l:'1:10',f:10},{l:'1:20',f:20},{l:'1:50',f:50}],
+  metric_mm:[{l:'1:1',f:1},{l:'1:2',f:2},{l:'1:5',f:5},{l:'1:10',f:10},{l:'1:20',f:20},{l:'1:50',f:50},{l:'1:100',f:100},{l:'1:200',f:200},{l:'1:500',f:500}],
+  metric_m:[{l:'1:1',f:1},{l:'1:100',f:100},{l:'1:200',f:200},{l:'1:500',f:500},{l:'1:1000',f:1000}]
+};
+const UNITS_INSUNITS={arch:1,dec_in:1,dec_ft:2,metric_mm:4,metric_m:6};
+
+const LW_OPTIONS=['0.00mm','0.05mm','0.09mm','0.13mm','0.18mm','0.25mm','0.35mm','0.50mm','0.70mm','1.00mm','1.40mm','2.00mm'];
+const LT_OPTIONS=['Continuous','HIDDEN','DASHED','CENTER','PHANTOM','DOT'];
+const NO_PLOT_SUFFIXES=['DEFPOINTS','ANNO-VPRT','XREF-B'];
+const LW_MAP={'0.00':-3,'0.05':5,'0.09':9,'0.13':13,'0.15':15,'0.18':18,'0.20':20,'0.25':25,'0.30':30,'0.35':35,'0.40':40,'0.50':50,'0.53':53,'0.60':60,'0.70':70,'0.80':80,'0.90':90,'1.00':100,'1.06':106,'1.20':120,'1.40':140,'1.58':158,'2.00':200,'2.11':211};
+
+function lwDxf(lwStr){const k=parseFloat((lwStr||'0').replace('mm','')).toFixed(2);return LW_MAP[k]!==undefined?LW_MAP[k]:-3;}
+
+
+// ── COLOR PALETTES ──────────────────────────────────────────────────────────
+// Each palette maps layer role (by suffix keyword) to an ACI color index.
+// First matching keyword wins; 'DEFAULT' is the fallback.
+// Applied on-demand; individual overrides always win.
+const PALETTES = [
+  {
+    id:'standard',
+    name:'Standard',
+    desc:'Default discipline colors — classic CAD color assignments per layer role',
+    colors:null
+  },
+  {
+    id:'modern',
+    name:'Modern',
+    desc:'Geometry in dark greys, systems in strong distinct hues, annotations in blue — no yellow or cyan',
+    // Uses only well-known seeded ACI values: 1-9, 30, 40, 140, 210, 220, 250-253
+    // ACI 250=#333(near-black) 251=#555 252=#777 253=#999 8=#414 9=#808
+    // ACI 1=red 2=yellow 3=green 4=cyan 5=blue 6=magenta 30=orange 140=purple 210=darkblue 220=darkgreen
+    colors:{
+      // Primary geometry — near-black, reads on both screen and print
+      'WALL':250,  'COLS':250,  'BEAM':250,  'FNDN':251,  'DECK':251,
+      'BLDG':250,  'PROP':250,  'ROW':251,
+      // Roads / civil geometry — dark grey step down
+      'ROAD':251,  'CURB':251,  'PVMT':252,  'WALK':252,
+      // MEP / systems — strong distinct hues (no yellow/cyan)
+      'DUCT':30,       // orange — HVAC
+      'MECH':30,
+      'PIPE-CW':5,     // blue — chilled water
+      'PIPE-HW':1,     // red — hot water
+      'PIPE':30,       // orange fallback for generic pipe
+      'ELEC':1,        // red — electrical
+      'POWR':1,
+      'PLMB':140,      // purple — plumbing
+      'UTIL-WATR':5,   // blue — water
+      'UTIL-SEWR':6,   // magenta — sewer
+      'UTIL-STRM':210, // dark blue — storm
+      'UTIL-ELEC':1,   // red — electrical ug
+      'UTIL-GAS':30,   // orange — gas
+      'UTIL-TELE':140, // purple — telecom
+      'RIGG':1,        // red — rigging (live events)
+      'LITE':30,       // orange — lighting
+      'AUDI':5,        // blue — audio
+      'VIDO':140,      // purple — video
+      // Structural specifics
+      'BRAC':30,       // orange — bracing
+      'JOIST':251,
+      'OPNG':9,        // grey — openings
+      // Site / landscape
+      'TOPO':220,      // dark green — contours
+      'LAND':220,
+      'ESMT':9,        // grey — easements
+      'SURV':8,        // dark — survey
+      // Annotation — clean blue
+      'ANNO':5,  'DIMS':5,  'NOTE':5,  'SYMB':5,  'TTLB':250,  'LEGN':5,  'KEYN':5,  'VPRT':9,
+      // Secondary / fill
+      'HATCH':253,  'PATT':253,  'FLOR-PATT':253,  'WALL-PATT':253,
+      // Demo / existing / reference
+      'DEMO':9,  'EXIST':252,  'REF':253,  'GHOST':253,  'XREF':253,
+      // Furniture / equipment — step lighter
+      'FURN':252,  'EQPM':252,  'SEATING':252,  'DECO':252,
+      // No-plot (use 9 = mid-grey — visible but clearly secondary)
+      'DEFPOINTS':9,  'XREF-B':9,
+      'DEFAULT':251
+    }
+  },
+  {
+    id:'presentation',
+    name:'Presentation',
+    desc:'For client-facing and marketing output — strong black geometry, bold system colors, visible on white',
+    // Designed for printing on white paper or PDF export — no white/near-white colors
+    // ACI 250=near-black works as "the black line" for primary geometry
+    colors:{
+      // All primary geometry — near-black (plots as a real black line)
+      'WALL':250,  'COLS':250,  'BEAM':250,  'FNDN':250,  'DECK':250,
+      'BLDG':250,  'PROP':250,  'ROW':250,
+      'DOOR':250,  'GLAZ':251,  'CLNG':251,  'STRS':250,  'ROOF':251,  'SITE':250,
+      'STGE':250,  'TENT':250,  'RIGG-TRUSS':250,
+      'ROAD':250,  'CURB':250,  'PVMT':251,  'WALK':251,
+      // MEP / systems — saturated, high contrast, distinct from each other
+      'DUCT':30,         // orange — HVAC
+      'MECH':30,
+      'PIPE-CW':5,       // blue — chilled water  
+      'PIPE-HW':1,       // red — hot water
+      'PIPE':30,
+      'ELEC':1,          // red — electrical
+      'POWR':1,
+      'PLMB':6,          // magenta — plumbing
+      'UTIL-WATR':5,     // blue
+      'UTIL-SEWR':6,     // magenta
+      'UTIL-STRM':4,     // cyan (ok in print context at full sat)
+      'UTIL-ELEC':1,     // red
+      'UTIL-GAS':30,     // orange
+      'RIGG':1,
+      'LITE':30,
+      'AUDI':5,
+      'VIDO':6,
+      // Structural
+      'BRAC':30,
+      'JOIST':251,
+      'OPNG':9,
+      // Site / landscape — greens
+      'TOPO':3,    'LAND':3,    'ESMT':9,    'SURV':250,
+      // Annotation — black for clarity in print
+      'ANNO':250,  'DIMS':250,  'NOTE':250,  'SYMB':250,  'TTLB':250,  'LEGN':250,  'KEYN':250,
+      // Viewport / no-plot — grey (still visible but clearly not primary)
+      'VPRT':9,
+      // Secondary
+      'HATCH':9,   'PATT':9,    'WALL-PATT':9,   'FLOR-PATT':9,
+      // Demo / reference
+      'DEMO':1,    'EXIST':9,   'REF':9,    'GHOST':253,  'XREF':253,
+      // Furniture / equipment
+      'FURN':251,  'EQPM':251,  'SEATING':251,  'DECO':9,
+      // No-plot
+      'DEFPOINTS':9,  'XREF-B':9,
+      'DEFAULT':250
+    }
+  },
+  {
+    id:'duotone',
+    name:'Duotone',
+    desc:'Blue family for geometry + orange accent for active systems — clean, editorial, two-color discipline',
+    // Two-color concept: cool (blue family) + warm (orange/amber)
+    // Cool: ACI 5=blue, 210=darkblue, 4=cyan(light accent)
+    // Warm: ACI 30=orange, 40=olive-amber (secondary warm)
+    // Neutral: ACI 250=near-black, 251=dark-grey, 9=mid-grey
+    colors:{
+      // Primary geometry — dark blue (the "cool" anchor)
+      'WALL':210,  'COLS':210,  'BEAM':210,  'FNDN':5,   'DECK':210,
+      'BLDG':210,  'PROP':210,  'ROW':5,
+      'DOOR':210,  'GLAZ':5,    'CLNG':5,    'STRS':210,  'ROOF':5,    'SITE':210,
+      'STGE':210,  'TENT':210,  'RIGG-TRUSS':210,
+      'ROAD':210,  'CURB':210,  'PVMT':5,    'WALK':5,
+      // MEP / systems — warm orange (the "hot" accent)
+      'DUCT':30,   'MECH':30,
+      'PIPE-CW':5,   // stay cool — chilled water = blue makes sense
+      'PIPE-HW':30,  // warm — hot water = orange makes sense
+      'PIPE':30,
+      'ELEC':30,   'POWR':30,
+      'PLMB':5,    // blue — plumbing stays cool
+      'UTIL-WATR':5,   // blue
+      'UTIL-SEWR':30,  // orange/warm — sewer
+      'UTIL-STRM':210, // dark blue — storm
+      'UTIL-ELEC':30,  // orange — electrical
+      'UTIL-GAS':30,   // orange
+      'UTIL-TELE':5,   // blue
+      'RIGG':30,
+      'LITE':30,
+      'AUDI':5,
+      'VIDO':30,
+      // Structural
+      'BRAC':30,
+      'JOIST':210,
+      'OPNG':9,
+      // Site / landscape — use cool blue family
+      'TOPO':5,    'LAND':210,  'ESMT':9,   'SURV':210,
+      // Annotation — dark blue for legibility
+      'ANNO':210,  'DIMS':210,  'NOTE':210,  'SYMB':210,  'TTLB':250,  'LEGN':210,  'KEYN':210,
+      'VPRT':9,
+      // Secondary
+      'HATCH':9,  'PATT':9,   'WALL-PATT':9,  'FLOR-PATT':9,
+      // Demo / existing — warm (demo = orange, existing = grey)
+      'DEMO':30,  'EXIST':9,   'REF':9,   'GHOST':9,   'XREF':9,
+      // Furniture / equipment — cool
+      'FURN':5,  'EQPM':5,  'SEATING':9,  'DECO':30,
+      // No-plot
+      'DEFPOINTS':9,  'XREF-B':9,
+      'DEFAULT':210
+    }
+  }
+];
+
+function applyPalette(palId, suffix, baseColor){
+  if(palId==='standard') return baseColor;
+  const pal=PALETTES.find(p=>p.id===palId);
+  if(!pal||!pal.colors) return baseColor;
+  const sfxUp=(suffix||'').toUpperCase();
+  // Match against keywords — longest matching key wins (more specific beats less specific)
+  let bestKey='', bestCol=null;
+  for(const [kw,col] of Object.entries(pal.colors)){
+    if(kw!=='DEFAULT' && sfxUp.includes(kw) && kw.length>bestKey.length){
+      bestKey=kw; bestCol=col;
+    }
+  }
+  if(bestCol!==null) return bestCol;
+  return pal.colors['DEFAULT']||baseColor;
+}
+
+let activePalette='standard';
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let layerOverrides={};  // key=idx, value={name,color,lt,lw}
+let customLayers=null;  // null = use built-in, array = user-defined set
+
+// Text styles — each: {name, font, height, width, oblique}
+const FONT_OPTIONS=[
+  {label:'Arial (default)',       file:'Arial.ttf'},
+  {label:'Arial Narrow',          file:'Arial Narrow.ttf'},
+  {label:'Calibri',               file:'calibri.ttf'},
+  {label:'Romans (SHX)',          file:'romans.shx'},
+  {label:'Simplex (SHX)',         file:'simplex.shx'},
+  {label:'Helvetica',             file:'Helvetica.ttf'},
+  {label:'Courier New',           file:'cour.ttf'},
+  {label:'txt (SHX classic)',     file:'txt.shx'},
+];
+let textStyles=[
+  {name:'LABEL', font:'Arial.ttf', height:0, width:0.85, oblique:0},
+  {name:'TAG',   font:'Arial.ttf', height:0, width:0.70, oblique:0},
+];
+
+function g(id){return document.getElementById(id)}
+function getState(){
+  return {
+    standard:g('sel-standard').value,
+    customPfx:g('custom-prefix').value.trim().toUpperCase(),
+    industry:g('sel-industry').value,
+    units:g('sel-units').value,
+    sf:parseFloat(g('sel-scale').value)||48,
+    scaleLabel:g('sel-scale').options[g('sel-scale').selectedIndex]?.text||'',
+    size:g('sel-size').value,
+    dimName:g('txt-dim').value.trim()||'STD-DIM',
+    arrowStyle:g('sel-arrow').value,
+    metricDim:g('chk-metric-dim').checked,
+    ltHidden:g('lt-hidden').checked,
+    ltDashed:g('lt-dashed').checked,
+    ltCenter:g('lt-center').checked,
+    ltPhantom:g('lt-phantom').checked,
+    ltDot:g('lt-dot').checked,
+    inclUnits:g('chk-units').checked,
+    inclZoom:g('chk-zoom').checked,
+  };
+}
+
+function getPrefix(ind,std,pfx){
+  if(std==='Custom') return pfx||'PRJ';
+  const m={Architecture:{AIA:'A',NCS:'A',ISO:'A',ANSI:'A',Casual:''},Civil:{AIA:'C',NCS:'C',ISO:'C',ANSI:'C',Casual:''},MEP:{AIA:'M',NCS:'M',ISO:'M',ANSI:'M',Casual:''},Structural:{AIA:'S',NCS:'S',ISO:'S',ANSI:'S',Casual:''},LiveEvents:{AIA:'EV',NCS:'EV',ISO:'EV',ANSI:'EV',Casual:''},General:{AIA:'G',NCS:'G',ISO:'G',ANSI:'G',Casual:''}};
+  return (m[ind]||{})[std]||'G';
+}
+
+function buildLayerName(pfx,sfx,std){
+  if(!pfx) return sfx;
+  const sep=std==='ANSI'?'_':'-';
+  return pfx+sep+sfx;
+}
+
+function san(n){return n.replace(/[^A-Za-z0-9_\-]/g,'_').substring(0,31);}
+
+function getLayers(state){
+  if(customLayers) return customLayers.map((l,i)=>{
+    const ov=layerOverrides[i];
+    return ov?{...l,...ov}:l;
+  });
+  const raw=(LAYERS[state.industry]||LAYERS.General)[state.size]||[];
+  const pfx=getPrefix(state.industry,state.standard,state.customPfx);
+  return raw.map((r,i)=>{
+    const [suffix,desc,baseColor,lt,lw]=r;
+    const ov=layerOverrides[i]||{};
+    return {
+      name:   ov.name  !== undefined ? ov.name  : san(buildLayerName(pfx,suffix,state.standard)),
+      suffix, desc,
+      color:  ov.color !== undefined ? ov.color : applyPalette(activePalette, suffix, baseColor),
+      lt:     ov.lt    !== undefined ? ov.lt    : lt,
+      lw:     ov.lw    !== undefined ? ov.lw    : lw,
+      _edited: Object.keys(ov).length>0
+    };
+  });
+}
+
+function getSelectedLTs(state){
+  const r=[];
+  if(state.ltHidden) r.push('HIDDEN');
+  if(state.ltDashed) r.push('DASHED');
+  if(state.ltCenter) r.push('CENTER');
+  if(state.ltPhantom) r.push('PHANTOM');
+  if(state.ltDot) r.push('DOT');
+  return r;
+}
+
+function calcDimVars(state){
+  const sf=state.sf;
+  const isMetric=state.units.startsWith('metric');
+  const arch=state.units==='arch';
+  let txtH,arrowSz,extExt,extOff,dimGap;
+  if(isMetric||state.metricDim){txtH=2.5;arrowSz=2.5;extExt=2;extOff=2;dimGap=1;}
+  else if(arch){txtH=0.09375;arrowSz=0.09375;extExt=0.0625;extOff=0.0625;dimGap=0.0625;}
+  else{txtH=0.125;arrowSz=0.125;extExt=0.0625;extOff=0.0625;dimGap=0.0625;}
+  const luType=(arch&&!state.metricDim)?5:2;
+  const dimdec=(arch&&!state.metricDim)?0:2;
+  const dimfrac=0;
+  const arrBlk={tick:'_Oblique',closed:'_ClosedFilled',dot:'_Dot',open:'_Open'}[state.arrowStyle];
+  return{sf,txtH,arrowSz,extExt,extOff,dimGap,luType,dimdec,dimfrac,arrBlk};
+}
+
+function resetOverrides(){layerOverrides={};customLayers=null;refresh();}
+
+// ═══════════════════════════════════════════════════════
+// UI INIT
+// ═══════════════════════════════════════════════════════
+function initAciGrid(){
+  const grid=g('aci-grid');
+  for(let i=1;i<=256;i++){
+    const c=document.createElement('div');
+    c.className='aci-cell';
+    c.style.background=aci(i);
+    c.title='ACI '+i;
+    c.dataset.ci=i;
+    c.onclick=()=>{
+      document.querySelectorAll('.aci-cell').forEach(x=>x.classList.remove('sel'));
+      c.classList.add('sel');
+      g('cp-manual').value=i;
+    };
+    grid.appendChild(c);
+  }
+}
+
+function updateScales(){
+  const u=g('sel-units').value;
+  const sel=g('sel-scale');
+  const opts=SCALE_OPTIONS[u]||[];
+  sel.innerHTML=opts.map((o,i)=>`<option value="${o.f}"${(u==='arch'&&i===4)||(u!=='arch'&&i===0)?' selected':''}>${o.l}</option>`).join('');
+}
+
+function tog(head){
+  head.classList.toggle('open');
+  const body=head.nextElementSibling;
+  body.classList.toggle('closed');
+}
+
+function showPane(id){
+  // Deactivate all tabs and panes
+  document.querySelectorAll('.tabbar-tab').forEach(t=>{
+    t.className='tabbar-tab';
+  });
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('visible'));
+  // Activate selected
+  const tab=g('ttab-'+id);
+  if(tab) tab.classList.add('active-'+id);
+  const pane=g('pane-'+id);
+  if(pane) pane.classList.add('visible');
+}
+
+// ═══════════════════════════════════════════════════════
+// LAYER TABLE RENDER
+// ═══════════════════════════════════════════════════════
+function refresh(){
+  g('pfx-field').style.display=g('sel-standard').value==='Custom'?'block':'none';
+  renderLayerTable();
+  renderStyles();
+}
+
+function renderLayerTable(){
+  const state=getState();
+  const layers=getLayers(state);
+  g('lbadge').textContent=layers.length;
+  const editedCount=layers.filter(l=>l._edited).length;
+  g('tbar-info').textContent=`${layers.length} layers`+(editedCount?` · ${editedCount} edited`:'');
+
+  let h=`<table class="lt">
+    <thead><tr>
+      <th>#</th><th>Name</th><th>Description</th>
+      <th>Color</th><th>Linetype</th><th>LW</th><th></th>
+    </tr></thead><tbody>`;
+  layers.forEach((l,i)=>{
+    const sw=`<span class="swatch" style="background:${aci(l.color)}" title="ACI ${l.color} — click to change" onclick="openColorPicker(${i},'${l.name}')"></span>`;
+    h+=`<tr class="${l._edited?'edited':''}" id="lrow-${i}">
+      <td class="ci-num">${i+1}</td>
+      <td><span class="ln-name">${l.name}</span></td>
+      <td><span class="ln-desc">${l.desc}</span></td>
+      <td>${sw}<span class="ci-num" style="margin-left:4px">${l.color}</span></td>
+      <td><span class="lt-pill">${l.lt}</span></td>
+      <td><span class="lw-pill">${l.lw}</span></td>
+      <td>
+        <button class="row-edit-btn" title="Edit row" onclick="startEdit(${i})">✎</button>
+        <button class="row-del-btn" title="Remove layer" onclick="deleteLayer(${i})">✕</button>
+      </td>
+    </tr>`;
+  });
+  h+=`</tbody></table>`;
+  g('layer-wrap').innerHTML=h;
+}
+
+// ── INLINE ROW EDIT ─────────────────────────────────
+let editingIdx=null;
+
+function startEdit(i){
+  if(editingIdx!==null) cancelEdit();
+  editingIdx=i;
+  const state=getState();
+  const layers=getLayers(state);
+  const l=layers[i];
+  const row=g(`lrow-${i}`);
+  row.classList.add('edit-row');
+
+  const ltOpts=LT_OPTIONS.map(x=>`<option${x===l.lt?' selected':''}>${x}</option>`).join('');
+  const lwOpts=LW_OPTIONS.map(x=>`<option${x===l.lw?' selected':''}>${x}</option>`).join('');
+
+  row.innerHTML=`
+    <td class="ci-num">${i+1}</td>
+    <td><input type="text" class="name-input" id="ei-name" value="${l.name}"></td>
+    <td><input type="text" id="ei-desc" value="${l.desc}" style="width:160px"></td>
+    <td>
+      <span class="swatch" style="background:${aci(l.color)};cursor:default" id="ei-sw"></span>
+      <input type="number" class="ci-input" id="ei-color" value="${l.color}" min="1" max="256" oninput="g('ei-sw').style.background=aci(parseInt(this.value)||1)">
+    </td>
+    <td><select id="ei-lt">${ltOpts}</select></td>
+    <td><select id="ei-lw">${lwOpts}</select></td>
+    <td style="white-space:nowrap">
+      <button class="row-edit-btn" onclick="saveEdit(${i})" style="color:var(--accent)">✔</button>
+      <button class="row-del-btn" onclick="cancelEdit()">✕</button>
+    </td>`;
+}
+
+function saveEdit(i){
+  const name=san(g('ei-name').value.trim());
+  const desc=g('ei-desc').value.trim();
+  const color=Math.max(1,Math.min(256,parseInt(g('ei-color').value)||1));
+  const lt=g('ei-lt').value;
+  const lw=g('ei-lw').value;
+  if(customLayers){
+    customLayers[i]={...customLayers[i],name,desc,color,lt,lw};
+  } else {
+    layerOverrides[i]={name,desc,color,lt,lw};
+  }
+  editingIdx=null;
+  refresh();
+}
+
+function cancelEdit(){editingIdx=null;refresh();}
+
+function deleteLayer(i){
+  const state=getState();
+  const layers=getLayers(state);
+  if(customLayers){
+    customLayers.splice(i,1);
+    // Rebuild overrides keys
+    const newOv={};
+    Object.entries(layerOverrides).forEach(([k,v])=>{const ki=parseInt(k);if(ki<i)newOv[ki]=v;else if(ki>i)newOv[ki-1]=v;});
+    layerOverrides=newOv;
+  } else {
+    // Mark as deleted via customLayers snapshot
+    const snap=layers.filter((_,j)=>j!==i);
+    customLayers=snap.map(l=>({...l}));
+    layerOverrides={};
+  }
+  refresh();
+}
+
+// ── COLOR PICKER ────────────────────────────────────
+let cpTarget=null;
+
+function openColorPicker(idx,name){
+  cpTarget=idx;
+  const state=getState();
+  const layers=getLayers(state);
+  const curColor=layers[idx].color;
+  // Highlight current color in grid
+  document.querySelectorAll('.aci-cell').forEach(c=>{
+    c.classList.toggle('sel',parseInt(c.dataset.ci)===curColor);
+  });
+  g('cp-manual').value=curColor;
+  const popup=g('color-popup');
+  const btn=document.querySelector(`#lrow-${idx} .swatch`);
+  if(btn){
+    const r=btn.getBoundingClientRect();
+    popup.style.left=Math.min(r.left,window.innerWidth-230)+'px';
+    popup.style.top=(r.bottom+4)+'px';
+  }
+  popup.classList.add('show');
+}
+
+function closeColorPicker(){g('color-popup').classList.remove('show');cpTarget=null;}
+
+function applyColorPick(){
+  const val=Math.max(1,Math.min(256,parseInt(g('cp-manual').value)||1));
+  if(cpTarget!==null){
+    if(customLayers) customLayers[cpTarget].color=val;
+    else layerOverrides[cpTarget]={...(layerOverrides[cpTarget]||{}),color:val};
+  }
+  closeColorPicker();
+  refresh();
+}
+
+document.addEventListener('click',e=>{
+  if(!g('color-popup').contains(e.target)&&!e.target.classList.contains('swatch'))
+    closeColorPicker();
+});
+
+// ═══════════════════════════════════════════════════════
+// IMPORT
+// ═══════════════════════════════════════════════════════
+function importCSV(append){
+  const raw=g('csv-input').value.trim();
+  if(!raw){g('import-msg').textContent='Nothing to import.';return;}
+  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const parsed=[];
+  const errors=[];
+  lines.forEach((line,li)=>{
+    const parts=line.split(',').map(p=>p.trim());
+    if(parts.length<2){errors.push(`Line ${li+1}: too few columns`);return;}
+    const name=san(parts[0]);
+    const color=Math.max(1,Math.min(256,parseInt(parts[1])||7));
+    const lt=LT_OPTIONS.includes((parts[2]||'Continuous').toUpperCase())?(parts[2]||'Continuous').toUpperCase():'Continuous';
+    const lw=LW_OPTIONS.includes(parts[3]||'0.25mm')?(parts[3]||'0.25mm'):'0.25mm';
+    parsed.push({name,desc:'',suffix:'',_baseColor:color,color,lt,lw,_edited:true});
+  });
+  if(append&&customLayers) customLayers=[...customLayers,...parsed];
+  else customLayers=parsed;
+  layerOverrides={};
+  g('import-msg').textContent=`✔ Imported ${parsed.length} layers.`+(errors.length?` Errors: ${errors.join('; ')}`:'');
+  refresh();
+  showPane('layers');
+}
+
+function clearCSV(){g('csv-input').value='';g('import-msg').textContent='';}
+
+function addSingleLayer(){
+  const name=san(g('add-name').value.trim());
+  if(!name){g('import-msg').textContent='Enter a layer name.';return;}
+  const color=Math.max(1,Math.min(256,parseInt(g('add-color').value)||7));
+  const lt=g('add-lt').value;
+  const lw=g('add-lw').value;
+  const newL={name,desc:'',suffix:'',_baseColor:color,color,lt,lw,_edited:true};
+  if(!customLayers){
+    const state=getState();
+    customLayers=[...getLayers(state).map(l=>({...l})),newL];
+  } else {
+    customLayers.push(newL);
+  }
+  layerOverrides={};
+  g('import-msg').textContent=`✔ Added layer "${name}".`;
+  g('add-name').value='';
+  refresh();
+  showPane('layers');
+}
+
+// ═══════════════════════════════════════════════════════
+// STYLES TAB
+// ═══════════════════════════════════════════════════════
+function renderStyles(){
+  const state=getState();
+  const dv=calcDimVars(state);
+  const isMetric=state.units.startsWith('metric')||state.metricDim;
+  const arch=state.units==='arch'&&!state.metricDim;
+  const fontOpts=FONT_OPTIONS.map(f=>`<option value="${f.file}">${f.label}</option>`).join('');
+
+  let html='<div class="styles-section-head">Text Styles <span style="font-size:10px;color:var(--text3);font-weight:400">('+textStyles.length+' defined)</span></div>';
+
+  textStyles.forEach((ts,i)=>{
+    const isFirst=i===0;
+    const fontSel=FONT_OPTIONS.map(f=>`<option value="${f.file}"${f.file===ts.font?' selected':''}>${f.label}</option>`).join('');
+    html+=`<div class="scard">
+      <h3>Style ${i+1}: ${ts.name}${isFirst?' — used for DIMTXSTY':''}</h3>
+      ${textStyles.length>1?`<button class="del-style" onclick="deleteStyle(${i})" title="Remove style">✕</button>`:''}
+      <div class="r3" style="gap:8px;margin-bottom:8px">
+        <div class="field"><label class="lbl">Name</label>
+          <input type="text" value="${ts.name}" oninput="updateStyle(${i},'name',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">Font</label>
+          <select onchange="updateStyle(${i},'font',this.value)" style="background:rgba(255,255,255,.9)">${fontSel}</select>
+        </div>
+        <div class="field"><label class="lbl">Height (0=variable)</label>
+          <input type="number" value="${ts.height}" step="0.01" min="0" oninput="updateStyle(${i},'height',parseFloat(this.value)||0)" style="background:rgba(255,255,255,.9)">
+        </div>
+      </div>
+      <div class="r2" style="gap:8px">
+        <div class="field"><label class="lbl">Width Factor</label>
+          <input type="number" value="${ts.width}" step="0.05" min="0.1" max="2" oninput="updateStyle(${i},'width',parseFloat(this.value)||1)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">Oblique Angle</label>
+          <input type="number" value="${ts.oblique}" step="1" min="-85" max="85" oninput="updateStyle(${i},'oblique',parseFloat(this.value)||0)" style="background:rgba(255,255,255,.9)">
+        </div>
+      </div>
+      <div class="sprv" style="margin-top:10px">
+        <span style="font-family:Arial;font-size:15px;font-stretch:condensed;transform:scaleX(${ts.width});display:inline-block;transform-origin:left">Sample Label Text — Room 101</span>
+      </div>
+    </div>`;
+  });
+
+  html+=`<button class="add-style-btn" onclick="addStyle()">+ Add Text Style</button>`;
+
+  html+=`<div class="styles-section-head" style="margin-top:4px">${state.dimName} — Dimension Style</div>`;
+  html+=`<div class="dcard"><div class="dv-grid">
+    <div class="sprop"><span class="k">DIMSCALE</span><span class="v">${dv.sf}</span></div>
+    <div class="sprop"><span class="k">LTSCALE</span><span class="v">${dv.sf}</span></div>
+    <div class="sprop"><span class="k">DIMTXT</span><span class="v">${dv.txtH}</span></div>
+    <div class="sprop"><span class="k">DIMASZ</span><span class="v">${dv.arrowSz}</span></div>
+    <div class="sprop"><span class="k">DIMEXE</span><span class="v">${dv.extExt}</span></div>
+    <div class="sprop"><span class="k">DIMEXO</span><span class="v">${dv.extOff}</span></div>
+    <div class="sprop"><span class="k">DIMGAP</span><span class="v">${dv.dimGap}</span></div>
+    <div class="sprop"><span class="k">DIMLUNIT</span><span class="v">${dv.luType} (${arch?'Arch':isMetric?'Decimal':'Decimal'})</span></div>
+    <div class="sprop"><span class="k">DIMDEC</span><span class="v">${dv.dimdec}</span></div>
+    <div class="sprop"><span class="k">Arrow</span><span class="v">${state.arrowStyle}</span></div>
+    <div class="sprop"><span class="k">DIMTXSTY</span><span class="v">${textStyles[0]?textStyles[0].name:'LABEL'}</span></div>
+    <div class="sprop"><span class="k">Plotted Ht</span><span class="v">${isMetric?dv.txtH+'mm':arch?(Math.round(dv.txtH*32)/32).toFixed(4)+'"':dv.txtH+'"'}</span></div>
+  </div></div>`;
+
+  const wrap=g('styles-scroll');
+  if(wrap) wrap.innerHTML=html;
+}
+
+function updateStyle(i,key,val){
+  if(i<textStyles.length) textStyles[i][key]=val;
+  renderStyles();
+}
+function addStyle(){
+  textStyles.push({name:'STYLE'+(textStyles.length+1),font:'Arial.ttf',height:0,width:0.85,oblique:0});
+  renderStyles();
+}
+function deleteStyle(i){
+  if(textStyles.length<=1){alert('At least one text style required.');return;}
+  textStyles.splice(i,1);
+  renderStyles();
+}
+
+// ═══════════════════════════════════════════════════════
+// LISP GENERATOR
+// Following SPACE_UTILITIES.lsp patterns (spc:deflayer / spc:deftextstyle)
+// entmake with tblsearch guards for idempotent runs
+// ═══════════════════════════════════════════════════════
+function generateLispText(){
+  const state=getState();
+  const layers=getLayers(state);
+  const lts=getSelectedLTs(state);
+  const dv=calcDimVars(state);
+  function q(v){return '"'+v+'"';}
+  function r(n){const f=parseFloat(n);return Number.isInteger(f)?f.toFixed(1):String(f);}
+
+  const L=[];
+  L.push(';; ================================================================');
+  L.push(';; AutoCAD Setup LISP — generated by FirstLayer');
+  L.push(';; Standard : '+state.standard+'  |  Industry : '+state.industry);
+  L.push(';; Scale    : '+state.scaleLabel);
+  L.push(';; 1. APPLOAD this file  (or drag-drop onto AutoCAD)');
+  L.push(';; 2. Type: SETMEUP  at the command prompt');
+  L.push(';; Compatible: AutoCAD 2000+, BricsCAD, ZWCAD');
+  L.push(';; ================================================================');
+  L.push('');
+  L.push(';; ── Helpers (idempotent — safe to run on existing drawings) ──────');
+  L.push('');
+  L.push('(defun su:load-ltype (lt-name / )');
+  L.push('  (if (null (tblsearch "LTYPE" lt-name))');
+  L.push('    (command "_.-LINETYPE" "_L" lt-name "ACAD.LIN" "")');
+  L.push('    (princ (strcat "\\n  skip (loaded): " lt-name))');
+  L.push('  )');
+  L.push(')');
+  L.push('');
+  L.push('(defun su:def-style (sname font height width oblique / )');
+  L.push('  (if (null (tblsearch "STYLE" sname))');
+  L.push('    (entmake (list');
+  L.push('      (cons 0   "STYLE")');
+  L.push('      (cons 100 "AcDbSymbolTableRecord")');
+  L.push('      (cons 100 "AcDbTextStyleTableRecord")');
+  L.push('      (cons 2   sname)');
+  L.push('      (cons 70  0)');
+  L.push('      (cons 40  height)');
+  L.push('      (cons 41  width)');
+  L.push('      (cons 50  oblique)');
+  L.push('      (cons 71  0)');
+  L.push('      (cons 3   font)');
+  L.push('      (cons 4   "")))');
+  L.push('    (princ (strcat "\\n  skip (exists): " sname))');
+  L.push('  )');
+  L.push('  sname');
+  L.push(')');
+  L.push('');
+  L.push('(defun su:def-layer (lname color ltype lweight plot / )');
+  L.push('  (if (null (tblsearch "LAYER" lname))');
+  L.push('    (entmake (list');
+  L.push('      (cons 0   "LAYER")');
+  L.push('      (cons 100 "AcDbSymbolTableRecord")');
+  L.push('      (cons 100 "AcDbLayerTableRecord")');
+  L.push('      (cons 2   lname)');
+  L.push('      (cons 70  64)');
+  L.push('      (cons 62  color)');
+  L.push('      (cons 6   ltype)');
+  L.push('      (cons 370 lweight)');
+  L.push('      (cons 290 plot)))');
+  L.push('    (princ (strcat "\\n  skip (exists): " lname))');
+  L.push('  )');
+  L.push('  lname');
+  L.push(')');
+  L.push('');
+  L.push(';; ── Main command ──────────────────────────────────────────────────');
+  L.push('');
+  L.push('(defun c:SETMEUP ( / *error* )');
+  L.push('');
+  L.push('  (defun *error* (msg)');
+  L.push('    (if (not (member msg (list "Function cancelled" "quit / exit abort")))');
+  L.push('      (princ (strcat "\\nSetup error: " msg)))');
+  L.push('    (setvar "CMDECHO" 1)');
+  L.push('    (princ))');
+  L.push('');
+  L.push('  (setvar "CMDECHO" 0)');
+  L.push('');
+  if(state.inclUnits){
+    L.push('  (setvar "INSUNITS" '+UNITS_INSUNITS[state.units]+')');
+  }
+  L.push('  (setvar "LTSCALE" '+r(dv.sf)+')');
+  L.push('');
+  if(lts.length){
+    L.push('  ;; Linetypes');
+    lts.forEach(lt=>L.push('  (su:load-ltype '+q(lt)+')'));
+    L.push('');
+  }
+  L.push('  ;; Text styles — before dim vars so DIMTXSTY resolves');
+  textStyles.forEach(ts=>{
+    L.push('  (su:def-style '+q(ts.name)+' '+q(ts.font)+' '+r(ts.height)+' '+r(ts.width)+' '+r(ts.oblique)+')');
+  });
+  L.push('');
+  L.push('  ;; Text styles ('+textStyles.length+'), Layers ('+layers.length+')');
+  layers.forEach(l=>{
+    const lw=lwDxf(l.lw);
+    const lt=l.lt||'Continuous';
+    const plot=NO_PLOT_SUFFIXES.includes(l.suffix)?0:1;
+    L.push('  (su:def-layer '+q(l.name)+' '+l.color+' '+q(lt)+' '+lw+' '+plot+')');
+  });
+  L.push('');
+  L.push('  ;; Dimension variables');
+  L.push('  (setvar "DIMSCALE" '+r(dv.sf)+')');
+  L.push('  (setvar "DIMTXT"   '+r(dv.txtH)+')');
+  L.push('  (setvar "DIMASZ"   '+r(dv.arrowSz)+')');
+  L.push('  (setvar "DIMEXE"   '+r(dv.extExt)+')');
+  L.push('  (setvar "DIMEXO"   '+r(dv.extOff)+')');
+  L.push('  (setvar "DIMGAP"   '+r(dv.dimGap)+')');
+  L.push('  (setvar "DIMLUNIT" '+parseInt(dv.luType)+')');
+  L.push('  (setvar "DIMDEC"   '+parseInt(dv.dimdec)+')');
+  L.push('  (setvar "DIMFRAC"  '+parseInt(dv.dimfrac)+')');
+  L.push('  (setvar "DIMTXSTY" '+q(textStyles[0]?textStyles[0].name:'LABEL')+')');
+  L.push('  (setvar "DIMCLRD"  256)');
+  L.push('  (setvar "DIMCLRE"  256)');
+  L.push('  (setvar "DIMCLRT"  256)');
+  L.push('  (setvar "DIMSAH"   0)');
+  if(state.arrowStyle==='tick'){
+    L.push('  (setvar "DIMTSZ"   '+r(dv.arrowSz)+')');
+  } else {
+    L.push('  (setvar "DIMTSZ"   0.0)');
+    L.push('  (setvar "DIMBLK"   '+q(dv.arrBlk)+')');
+  }
+  L.push('');
+  L.push('  (command "_.-DIMSTYLE" "_S" '+q(state.dimName)+' "")');
+  L.push('');
+  if(state.inclZoom) L.push('  (command "_.ZOOM" "_E")');
+  L.push('');
+  L.push('  (setvar "CMDECHO" 1)');
+  L.push('  (princ (strcat "\\\\nSetup complete: "+layers.length+" layers."));');
+  L.push('  (princ)');
+  L.push(')');
+  L.push('');
+  L.push(';; Load this file via APPLOAD, then type SETMEUP at the command prompt.');
+  L.push('');
+
+  return{s:L.join('\n'),layers,lts};
+}
+
+// ═══════════════════════════════════════════════════════
+// SCR GENERATOR
+// ═══════════════════════════════════════════════════════
+function generateScrText(){
+  const state=getState();
+  const layers=getLayers(state);
+  const lts=getSelectedLTs(state);
+  const dv=calcDimVars(state);
+  const sv=(n,v)=>`${n}\n${v}\n`;
+  const lp=(...t)=>t.join(' ')+' \n';   // looping commands (-LAYER, -LINETYPE, -DIMSTYLE)
+  const ln=(...t)=>t.join(' ')+'\n';    // single-pass commands (-STYLE, ZOOM, sysvars by value)
+  let s='';
+  if(state.inclUnits) s+=sv('INSUNITS',UNITS_INSUNITS[state.units]);
+  s+=sv('LTSCALE',dv.sf);
+  lts.forEach(lt=>s+=lp('-LINETYPE','L',lt,'ACAD.LIN'));
+  textStyles.forEach(ts=>{
+    s+=ln('-STYLE',ts.name,ts.font,String(ts.height),String(ts.width),String(ts.oblique),'N','N');
+  });
+  layers.forEach(l=>s+=lp('-LAYER','N',l.name));
+  layers.forEach(l=>s+=lp('-LAYER','C',l.color,l.name));
+  layers.filter(l=>l.lt!=='Continuous').forEach(l=>s+=lp('-LAYER','LT',l.lt,l.name));
+  layers.forEach(l=>s+=lp('-LAYER','LW',l.lw.replace('mm',''),l.name));
+  layers.filter(l=>NO_PLOT_SUFFIXES.includes(l.suffix)).forEach(l=>s+=lp('-LAYER','P','N',l.name));
+  s+=sv('DIMSCALE',dv.sf); s+=sv('DIMTXT',dv.txtH); s+=sv('DIMASZ',dv.arrowSz);
+  s+=sv('DIMEXE',dv.extExt); s+=sv('DIMEXO',dv.extOff); s+=sv('DIMGAP',dv.dimGap);
+  s+=sv('DIMLUNIT',dv.luType); s+=sv('DIMDEC',dv.dimdec); s+=sv('DIMFRAC',dv.dimfrac);
+  s+=sv('DIMTXSTY',textStyles[0]?textStyles[0].name:'LABEL');
+  s+=sv('DIMCLRD','256'); s+=sv('DIMCLRE','256'); s+=sv('DIMCLRT','256'); s+=sv('DIMSAH','0');
+  if(state.arrowStyle==='tick') s+=sv('DIMTSZ',dv.arrowSz);
+  else{s+=sv('DIMTSZ','0');s+=sv('DIMBLK',dv.arrBlk);}
+  s+=lp('-DIMSTYLE','S',state.dimName);
+  if(state.inclZoom) s+=ln('ZOOM','E');
+  s+='\n';
+  return{s,layers,lts};
+}
+
+// ═══════════════════════════════════════════════════════
+// GENERATE & OUTPUT
+// ═══════════════════════════════════════════════════════
+function generateAll(){
+  const state=getState();
+  const {s:lsp,layers,lts}=generateLispText();
+  const {s:scr}=generateScrText();
+
+  g('lisp-out').textContent=lsp;
+  g('scr-out').textContent=scr;
+  g('lisp-info').textContent=`${layers.length} layers · ${lts.length} linetypes · ${textStyles.length} styles · 1 dim style`;
+  g('scr-info').textContent=`${layers.length} layers · ${lts.length} linetypes · ${textStyles.length} styles · ${scr.split('\n').length} lines`;
+
+  renderLayerTable();
+  renderStyles();
+
+  // Switch to LISP tab
+  showPane('lisp');
+}
+
+function copyOut(id,btn){
+  navigator.clipboard.writeText(g(id).textContent).then(()=>{
+    btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);
+  });
+}
+
+function downloadOut(type){
+  const state=getState();
+  const isLisp=type==='lisp';
+  const {s}=isLisp?generateLispText():generateScrText();
+  const ext=isLisp?'.lsp':'.scr';
+  const fname=`FIRSTLAYER_${state.industry}_${state.standard}${ext}`;
+  const blob=new Blob([s],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+
+function initPaletteBtns(){
+  const wrap=g('pal-btns');
+  PALETTES.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.className='tbtn pal-btn'+(p.id===activePalette?' pal-active':'');
+    btn.textContent=p.name;
+    btn.dataset.pid=p.id;
+    btn.onclick=()=>{
+      activePalette=p.id;
+      document.querySelectorAll('.pal-btn').forEach(b=>b.classList.toggle('pal-active',b.dataset.pid===p.id));
+      g('pal-desc').textContent=p.desc;
+      layerOverrides={};  // reset manual overrides when palette changes
+      refresh();
+    };
+    wrap.appendChild(btn);
+  });
+  g('pal-desc').textContent=PALETTES[0].desc;
+}
+
+// ═══════════════════════════════════════════════════════
+// PRESETS (localStorage)
+// ═══════════════════════════════════════════════════════
+const PRESET_KEY='firstlayer_presets_v1';
+
+function getPresets(){
+  try{return JSON.parse(localStorage.getItem(PRESET_KEY)||'[]');}catch{return[];}
+}
+function setPresets(p){localStorage.setItem(PRESET_KEY,JSON.stringify(p));}
+
+function openPresets(){
+  renderPresetList();
+  const m=g('preset-modal');
+  m.style.display='flex';
+}
+function closePresets(){g('preset-modal').style.display='none';}
+
+function savePreset(){
+  const name=g('preset-name').value.trim();
+  if(!name){g('preset-name').style.borderColor='#e53935';setTimeout(()=>g('preset-name').style.borderColor='',1200);return;}
+  const state=getState();
+  const preset={
+    id:Date.now(),
+    name,
+    created:new Date().toLocaleDateString(),
+    state:{
+      standard:state.standard,
+      industry:state.industry,
+      units:state.units,
+      sf:state.sf,
+      size:state.size,
+      dimName:state.dimName,
+      arrowStyle:state.arrowStyle,
+      metricDim:state.metricDim,
+      ltHidden:state.ltHidden,ltDashed:state.ltDashed,
+      ltCenter:state.ltCenter,ltPhantom:state.ltPhantom,ltDot:state.ltDot,
+      inclUnits:state.inclUnits,inclZoom:state.inclZoom,
+      customPfx:state.customPfx,
+    },
+    palette:activePalette,
+    textStyles:JSON.parse(JSON.stringify(textStyles)),
+    layerOverrides:JSON.parse(JSON.stringify(layerOverrides)),
+    customLayers:customLayers?JSON.parse(JSON.stringify(customLayers)):null,
+  };
+  const list=getPresets();
+  list.unshift(preset);
+  setPresets(list);
+  g('preset-name').value='';
+  renderPresetList();
+}
+
+function loadPreset(id){
+  const list=getPresets();
+  const p=list.find(x=>x.id===id);
+  if(!p) return;
+  const s=p.state;
+  // Apply form state
+  if(s.standard) g('sel-standard').value=s.standard;
+  if(s.industry) g('sel-industry').value=s.industry;
+  if(s.units){g('sel-units').value=s.units;updateScales();}
+  if(s.size) g('sel-size').value=s.size;
+  if(s.dimName) g('txt-dim').value=s.dimName;
+  if(s.arrowStyle) g('sel-arrow').value=s.arrowStyle;
+  if(typeof s.metricDim==='boolean') g('chk-metric-dim').checked=s.metricDim;
+  if(typeof s.ltHidden==='boolean') g('lt-hidden').checked=s.ltHidden;
+  if(typeof s.ltDashed==='boolean') g('lt-dashed').checked=s.ltDashed;
+  if(typeof s.ltCenter==='boolean') g('lt-center').checked=s.ltCenter;
+  if(typeof s.ltPhantom==='boolean') g('lt-phantom').checked=s.ltPhantom;
+  if(typeof s.ltDot==='boolean') g('lt-dot').checked=s.ltDot;
+  if(typeof s.inclUnits==='boolean') g('chk-units').checked=s.inclUnits;
+  if(typeof s.inclZoom==='boolean') g('chk-zoom').checked=s.inclZoom;
+  if(s.customPfx){g('custom-prefix').value=s.customPfx;}
+  // Apply palette, styles, overrides
+  if(p.palette){
+    activePalette=p.palette;
+    document.querySelectorAll('.pal-btn').forEach(b=>b.classList.toggle('pal-active',b.dataset.pid===p.palette));
+    const palObj=PALETTES.find(x=>x.id===p.palette);
+    if(palObj) g('pal-desc').textContent=palObj.desc;
+  }
+  if(p.textStyles) textStyles=JSON.parse(JSON.stringify(p.textStyles));
+  if(p.layerOverrides) layerOverrides=JSON.parse(JSON.stringify(p.layerOverrides));
+  customLayers=p.customLayers?JSON.parse(JSON.stringify(p.customLayers)):null;
+  refresh();
+  closePresets();
+}
+
+function deletePreset(id){
+  setPresets(getPresets().filter(x=>x.id!==id));
+  renderPresetList();
+}
+
+function renderPresetList(){
+  const list=getPresets();
+  const wrap=g('preset-list');
+  if(!list.length){
+    wrap.innerHTML='<p style="font-family:var(--mono);font-size:11px;color:#8a9ab0;text-align:center;padding:16px">No presets saved yet</p>';
+    return;
+  }
+  wrap.innerHTML=list.map(p=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">
+      <div style="flex:1">
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:#1a2332">${p.name}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:#8a9ab0">${p.state.industry} · ${p.state.standard} · ${p.created}</div>
+      </div>
+      <button class="tbtn" onclick="loadPreset(${p.id})" style="padding:4px 10px;font-size:10px">Load</button>
+      <button class="tbtn" onclick="deletePreset(${p.id})" style="padding:4px 8px;font-size:10px;border-color:#e53935;color:#c62828">✕</button>
+    </div>`).join('');
+}
+
+function exportPresets(){
+  const data=JSON.stringify(getPresets(),null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='firstlayer_presets.json';
+  a.click();
+}
+
+function importPresets(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const imported=JSON.parse(ev.target.result);
+      if(!Array.isArray(imported)) throw new Error('invalid');
+      const existing=getPresets();
+      const merged=[...imported,...existing].filter((p,i,arr)=>arr.findIndex(x=>x.id===p.id)===i);
+      setPresets(merged);
+      renderPresetList();
+    }catch{alert('Invalid presets file.');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+updateScales();
+initAciGrid();
+initPaletteBtns();
+showPane('layers');
+refresh();
+
+</script>
+
+<!-- PRESET MODAL -->
+<div id="preset-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.35);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:480px;max-width:94vw;box-shadow:0 16px 48px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-family:var(--mono);font-size:13px;color:#1a2332;letter-spacing:.5px">PRESETS</h3>
+      <button onclick="closePresets()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8a9ab0;padding:2px 6px;border-radius:4px">✕</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="preset-name" placeholder="Preset name..." style="flex:1">
+      <button class="tbtn pri" onclick="savePreset()">Save Current</button>
+    </div>
+    <div id="preset-list" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px;border-top:1px solid #e2e8f0;padding-top:12px">
+      <button class="tbtn" onclick="exportPresets()" style="flex:1">Export JSON</button>
+      <label class="tbtn" style="flex:1;text-align:center;cursor:pointer">
+        Import JSON <input type="file" accept=".json" onchange="importPresets(event)" style="display:none">
+      </label>
+    </div>
+    <p style="font-size:10px;color:#8a9ab0;font-family:var(--mono);text-align:center">Presets stored in browser localStorage · Export to share with team</p>
+  </div>
+</div>
+
+</body>
+</html>
