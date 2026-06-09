@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FirstLayer — AutoCAD Drawing Preparer</title>
+<meta name="description" content="Set up your AutoCAD drawing in seconds. Layers, text styles, dimension styles — configured for your industry and standard. Free tool by 100doors.">
+<meta property="og:title" content="FirstLayer — AutoCAD Drawing Preparer">
+<meta property="og:description" content="Never type another layer name. Generate industry-standard layers, text styles, and a ready-to-run LISP or SCR file. Free.">
+<meta property="og:url" content="https://100doorsfirstlayer.vercel.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FirstLayer — AutoCAD Drawing Preparer">
+<meta name="twitter:description" content="Never type another layer name. Generate industry-standard layers, text styles, and a ready-to-run LISP or SCR file. Free.">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
@@ -16,11 +24,11 @@
   --surface:           #ffffff;
   --surface2:          #f4f7fb;
   --surface3:          #eaeff6;
-  --text:              #1a2332;
-  --text2:             #4a5568;
-  --text3:             #8a9ab0;
-  --border:            #cdd5e0;
-  --border2:           #b8c4d4;
+  --text:              #0a0e14;
+  --text2:             #1a2332;
+  --text3:             #3a4a5c;
+  --border:            #b0bdd0;
+  --border2:           #94a6bc;
   --accent:            #0082d8;
   --accent-text:       #01579b;
   --mono: 'IBM Plex Mono', 'Courier New', monospace;
@@ -107,34 +115,70 @@ header {
   background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
   border-bottom: 2px solid var(--border);
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,.06);
   padding: 0 8px;
-  gap: 4px;
+  gap: 3px;
+  align-items: flex-end;
 }
 .tabbar-tab {
-  padding: 10px 20px;
+  padding: 8px 18px 9px;
   cursor: pointer;
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .8px;
   text-transform: uppercase;
-  border-bottom: 3px solid transparent;
+  border: 1.5px solid transparent;
+  border-bottom: none;
   margin-bottom: -2px;
-  border-radius: 6px 6px 0 0;
-  transition: all .2s ease;
+  border-radius: 5px 5px 0 0;
+  transition: all .15s ease;
   color: var(--text3);
   white-space: nowrap;
   position: relative;
+  background: rgba(255,255,255,.4);
 }
-.tabbar-tab:hover { background: var(--surface3); color: var(--text2); }
+.tabbar-tab:hover {
+  background: var(--surface3);
+  color: var(--text2);
+  border-color: var(--border);
+}
 
-/* Active tab gets its color identity */
-.tabbar-tab.active-layers  { color: var(--tab-layers-color);  border-bottom-color: var(--tab-layers-border);  background: var(--tab-layers-bg); }
-.tabbar-tab.active-import  { color: var(--tab-import-color);  border-bottom-color: var(--tab-import-border);  background: var(--tab-import-bg); }
-.tabbar-tab.active-styles  { color: var(--tab-styles-color);  border-bottom-color: var(--tab-styles-border);  background: var(--tab-styles-bg); }
-.tabbar-tab.active-lisp    { color: var(--tab-lisp-color);    border-bottom-color: var(--tab-lisp-border);    background: var(--tab-lisp-bg); }
-.tabbar-tab.active-scr     { color: var(--tab-scr-color);     border-bottom-color: var(--tab-scr-border);     background: var(--tab-scr-bg); }
+/* Active tab — raised, colored, bottom border dissolved into pane */
+.tabbar-tab.active-layers {
+  color: var(--tab-layers-color);
+  background: var(--tab-layers-bg);
+  border-color: var(--tab-layers-border);
+  border-bottom-color: var(--tab-layers-bg);
+  box-shadow: 0 -2px 6px rgba(0,130,216,.1);
+}
+.tabbar-tab.active-import {
+  color: var(--tab-import-color);
+  background: var(--tab-import-bg);
+  border-color: var(--tab-import-border);
+  border-bottom-color: var(--tab-import-bg);
+  box-shadow: 0 -2px 6px rgba(0,176,152,.1);
+}
+.tabbar-tab.active-styles {
+  color: var(--tab-styles-color);
+  background: var(--tab-styles-bg);
+  border-color: var(--tab-styles-border);
+  border-bottom-color: var(--tab-styles-bg);
+  box-shadow: 0 -2px 6px rgba(106,53,255,.1);
+}
+.tabbar-tab.active-lisp {
+  color: var(--tab-lisp-color);
+  background: var(--tab-lisp-bg);
+  border-color: var(--tab-lisp-border);
+  border-bottom-color: var(--tab-lisp-bg);
+  box-shadow: 0 -2px 6px rgba(245,94,0,.1);
+}
+.tabbar-tab.active-scr {
+  color: var(--tab-scr-color);
+  background: var(--tab-scr-bg);
+  border-color: var(--tab-scr-border);
+  border-bottom-color: var(--tab-scr-bg);
+  box-shadow: 0 -2px 6px rgba(117,117,117,.1);
+}
 
 /* Badge on Layers tab */
 .tab-badge {
@@ -178,9 +222,19 @@ header {
   background: rgba(255,255,255,.7);
   backdrop-filter: blur(4px);
   border-right: 1px solid var(--border);
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+.layers-sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+.layers-sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: rgba(255,255,255,.85);
+  padding: 10px 14px;
 }
 .layers-main {
   display: flex;
@@ -250,8 +304,9 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 /* ── GENERATE BUTTON ── */
 .gen-btn {
-  margin: 12px 14px 14px;
+  margin: 0;
   padding: 10px;
+  width: 100%;
   background: linear-gradient(135deg, #0091ea, #0064b0);
   color: #fff;
   border: none;
@@ -479,7 +534,7 @@ table.lt tr:hover td { background: rgba(0,145,234,.06); }
 .scard {
   background: rgba(255,255,255,.75);
   border: 1.5px solid rgba(124,77,255,.2);
-  border-radius: var(--radius);
+  border-radius: 4px;
   padding: 14px 16px;
   position: relative;
   box-shadow: var(--shadow);
@@ -501,18 +556,22 @@ table.lt tr:hover td { background: rgba(0,145,234,.06); }
 }
 .scard .del-style:hover { color: #e53935; background: rgba(229,57,53,.08); }
 .sprop { display: flex; gap: 8px; margin-bottom: 5px; font-family: var(--mono); font-size: 11px; }
-.sprop .k { color: var(--text3); width: 130px; flex-shrink: 0; font-weight: 600; }
+.sprop .k { color: var(--text2); width: 130px; flex-shrink: 0; font-weight: 700; letter-spacing: .3px; }
 .sprop .v { color: #7c4dff; font-weight: 600; }
 .sprv {
-  margin-top: 10px; padding: 12px 14px;
-  background: linear-gradient(145deg, #fff, #f8f4ff);
-  border-radius: 6px;
+  margin-top: 10px; padding: 10px 12px;
+  background: rgba(240,243,248,.9);
+  border-radius: 3px;
   border: 1px solid rgba(124,77,255,.12);
+  border-left: 3px solid rgba(124,77,255,.35);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .2px;
 }
 .dcard {
   background: rgba(255,255,255,.75);
   border: 1.5px solid rgba(124,77,255,.2);
-  border-radius: var(--radius);
+  border-radius: 4px;
   padding: 14px 16px;
   box-shadow: var(--shadow);
 }
@@ -536,10 +595,11 @@ table.lt tr:hover td { background: rgba(0,145,234,.06); }
   text-align: left;
 }
 .add-style-btn:hover { border-color: rgba(124,77,255,.6); background: rgba(212,179,255,.15); }
-/* Settings strip inside styles pane */
+/* Settings strip inside styles pane — subtle dialog-bar nod */
 .styles-settings {
-  background: rgba(255,255,255,.7);
+  background: rgba(232,236,242,.85);
   border-bottom: 1px solid rgba(124,77,255,.15);
+  border-top: 2px solid #b0bdd0;
   padding: 10px 20px;
   display: flex;
   gap: 14px;
@@ -626,11 +686,7 @@ pre.out {
 
 <header>
   <a href="https://100doors.com" target="_blank" rel="noopener" title="100doors.com" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0">
-    <svg height="26" viewBox="0 0 110 26" xmlns="http://www.w3.org/2000/svg" style="display:block">
-      <rect x="0" y="3" width="20" height="20" rx="4" fill="#0082d8"/>
-      <text x="10" y="17" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="700" fill="#fff">1D</text>
-      <text x="28" y="18" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#4a5568">100doors</text>
-    </svg>
+    <img src="100doors_logo_web_01.png" alt="100doors" style="height:26px;display:block">
   </a>
   <div style="width:1px;height:28px;background:var(--border2);flex-shrink:0"></div>
   <div class="logo">FIRST<em>LAYER</em></div>
@@ -659,6 +715,7 @@ pre.out {
 
       <!-- Sidebar -->
       <div class="layers-sidebar">
+        <div class="layers-sidebar-scroll">
 
         <div class="sg">
           <div class="sg-head open" onclick="tog(this)">Drawing Setup <span class="chv">▶</span></div>
@@ -704,6 +761,17 @@ pre.out {
                 <label class="lbl">Scale</label>
                 <select id="sel-scale" onchange="refresh()"></select>
               </div>
+            </div>
+            <div class="field">
+              <label class="lbl">Name Case</label>
+              <select id="sel-case" onchange="refresh()">
+                <option value="UPPER-DASH">UPPER-DASH &nbsp;— A-WALL-DEMO</option>
+                <option value="Title-Dash">Title-Dash &nbsp;— A-Wall-Demo</option>
+                <option value="lower-dash">lower-dash &nbsp;— a-wall-demo</option>
+                <option value="UPPER_UNDER">UPPER_UNDER — A_WALL_DEMO</option>
+                <option value="Title_Under" selected>Title_Under &nbsp;— A_Wall_Demo</option>
+                <option value="lower_under">lower_under &nbsp;— a_wall_demo</option>
+              </select>
             </div>
           </div>
         </div>
@@ -752,7 +820,10 @@ pre.out {
         </div>
 
         <div style="flex:1"></div>
-        <button class="gen-btn" onclick="generateAll()">▶ Generate LISP + SCR</button>
+        </div><!-- /layers-sidebar-scroll -->
+        <div class="layers-sidebar-footer">
+          <button class="gen-btn" onclick="generateAll()">▶ Generate LISP + SCR</button>
+        </div>
       </div><!-- /layers-sidebar -->
 
       <!-- Layer table -->
@@ -774,7 +845,7 @@ pre.out {
   <div class="tab-pane pane-import" id="pane-import">
     <div class="import-wrap">
       <div>
-        <h3>Paste CSV</h3>
+        <h3>Paste CSV — Layer Import</h3>
         <p>One layer per line: <code>Name, ACI Color, Linetype, Lineweight</code><br>
         Linetype: Continuous / HIDDEN / DASHED / CENTER / PHANTOM / DOT<br>
         Lineweight: e.g. <code>0.25mm</code> &nbsp; Example: <code>A-WALL, 5, Continuous, 0.50mm</code></p>
@@ -813,6 +884,17 @@ pre.out {
           <button class="tbtn pri" style="height:32px;margin-bottom:0;align-self:end" onclick="addSingleLayer()">Add</button>
         </div>
       </div>
+
+      <div style="border-top:1.5px solid rgba(0,191,165,.2);padding-top:14px;margin-top:4px">
+        <h3>Text &amp; Dimension Styles</h3>
+        <p>Configure text styles and dimension styles in the <strong>Styles &amp; Dims</strong> tab. Each dim style has its own name, arrow type, and optional variable overrides — blank fields auto-calculate from your scale and units. Multiple dim styles are supported (e.g. STD-DIM and DETAIL-DIM).</p>
+      </div>
+
+      <div style="border-top:1.5px solid rgba(0,191,165,.2);padding-top:14px;margin-top:4px">
+        <h3>Saving &amp; Sharing</h3>
+        <p>Use <strong>⊞ Presets</strong> to save your entire configuration — layers, text styles, dim styles, palette, and all settings — as a named preset in your browser. Export presets as JSON to share your standard with a teammate or back it up. They import the JSON, load the preset, and generate the same LISP or SCR you do.</p>
+      </div>
+
     </div>
   </div><!-- /pane-import -->
 
@@ -820,25 +902,11 @@ pre.out {
   <div class="tab-pane pane-styles" id="pane-styles">
     <div class="styles-pane">
 
-      <!-- Settings strip — dim style controls live here -->
+      <!-- Settings strip -->
       <div class="styles-settings">
-        <div class="field">
-          <label class="lbl">Dim Style Name</label>
-          <input type="text" id="txt-dim" value="STD-DIM" oninput="refresh()" style="width:120px">
-        </div>
-        <div class="field">
-          <label class="lbl">Arrow</label>
-          <select id="sel-arrow" onchange="refresh()" style="width:160px">
-            <option value="tick">Architectural Tick</option>
-            <option value="closed">Closed Filled</option>
-            <option value="dot">Dot</option>
-            <option value="open">Open Arrow</option>
-          </select>
-        </div>
-        <div class="ck-row">
-          <input type="checkbox" id="chk-metric-dim" onchange="refresh()">
-          <label for="chk-metric-dim">Force metric dim format</label>
-        </div>
+        <span style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--text2);text-transform:uppercase;margin-right:6px;opacity:.6">Style Manager</span>
+        <div style="width:1px;height:20px;background:var(--border2);margin-right:6px"></div>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Edit text &amp; dimension styles below · dim vars auto-calculate from scale · override individually per style</span>
         <div style="flex:1"></div>
         <button class="tbtn pri" onclick="generateAll()">▶ Generate</button>
       </div>
@@ -876,18 +944,14 @@ pre.out {
 
 <footer class="app-footer">
   <a href="https://100doors.com" target="_blank" rel="noopener">
-    <svg height="18" viewBox="0 0 110 26" xmlns="http://www.w3.org/2000/svg" style="display:block;opacity:.7">
-      <rect x="0" y="3" width="20" height="20" rx="4" fill="#0082d8"/>
-      <text x="10" y="17" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="700" fill="#fff">1D</text>
-      <text x="28" y="18" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#4a5568">100doors</text>
-    </svg>
+    <img src="100doors_logo_web_01.png" alt="100doors" class="footer-logo">
   </a>
   <span style="color:var(--border2)">|</span>
   <span>FirstLayer v3.0</span>
   <span style="color:var(--border2)">·</span>
   <a href="https://100doors.com" target="_blank" rel="noopener">100doors.com</a>
   <div style="flex:1"></div>
-  <span>Free tool — if it saved you time, </span><a href="https://ko-fi.com" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;margin-left:3px">pay what you want ☕</a>
+  <span>Free tool — if it saved you time, </span><a href="https://100doors.gumroad.com/l/firstlayer" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;margin-left:3px">pay what you want ☕</a>
 </footer>
 </div><!-- /app-body -->
 
@@ -958,331 +1022,367 @@ function aci(n){return ACI[n]||ACI[Math.max(1,Math.min(256,n))]||'#888'}
 const LAYERS={
   Architecture:{
     minimal:[
-      ['WALL','Walls',5,'Continuous','0.50mm'],
-      ['DOOR','Doors',4,'Continuous','0.35mm'],
-      ['GLAZ','Glazing / Windows',4,'Continuous','0.25mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['WALL',      'Exterior and interior walls — load-bearing and partition',          5,'Continuous','0.50mm'],
+      ['DOOR',      'Door panels, frames, and swing arcs',                               4,'Continuous','0.35mm'],
+      ['GLAZ',      'Windows, glazed openings, and storefront systems',                  4,'Continuous','0.25mm'],
+      ['ANNO-DIMS', 'Dimension strings, leaders, and running dimensions',                3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'General notes, room names, and text callouts',                      3,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     standard:[
-      ['WALL','Walls',5,'Continuous','0.50mm'],
-      ['WALL-PATT','Wall Hatch',8,'Continuous','0.09mm'],
-      ['DOOR','Doors',4,'Continuous','0.35mm'],
-      ['GLAZ','Glazing / Windows',4,'Continuous','0.25mm'],
-      ['CLNG','Ceiling / RCP',3,'HIDDEN','0.25mm'],
-      ['FLOR','Floor / Slab',8,'Continuous','0.18mm'],
-      ['FURN','Furniture',2,'Continuous','0.18mm'],
-      ['EQPM','Equipment',2,'Continuous','0.18mm'],
-      ['COLS','Columns',5,'Continuous','0.50mm'],
-      ['STRS','Stairs',5,'Continuous','0.35mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-SYMB','Symbols & Tags',3,'Continuous','0.25mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['WALL',      'Exterior and interior walls — load-bearing and partition',          5,'Continuous','0.50mm'],
+      ['WALL-PATT', 'Wall section hatch and fill — plot thin or screened',               8,'Continuous','0.09mm'],
+      ['COLS',      'Structural columns and pilasters',                                  5,'Continuous','0.50mm'],
+      ['DOOR',      'Door panels, frames, and swing arcs',                               4,'Continuous','0.35mm'],
+      ['GLAZ',      'Windows, glazed openings, and storefront systems',                  4,'Continuous','0.25mm'],
+      ['CLNG',      'Reflected ceiling plan elements — shown dashed in floor plan',      3,'HIDDEN',    '0.25mm'],
+      ['STRS',      'Stair treads, risers, landings, and handrails',                     5,'Continuous','0.35mm'],
+      ['FLOR',      'Floor slab edge, topping, and level transitions',                   8,'Continuous','0.18mm'],
+      ['FURN',      'Furniture — fixed casework, built-ins, and FF&E layout',            2,'Continuous','0.18mm'],
+      ['EQPM',      'Specialty equipment, appliances, and installed items',              2,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Dimension strings, leaders, and running dimensions',                3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'General notes, room names, and text callouts',                      3,'Continuous','0.18mm'],
+      ['ANNO-SYMB', 'Room tags, door numbers, detail bubbles, and section markers',      3,'Continuous','0.25mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     full:[
-      ['WALL','Walls',5,'Continuous','0.50mm'],
-      ['WALL-PATT','Wall Hatch',8,'Continuous','0.09mm'],
-      ['WALL-DEMO','Demo Walls',1,'DASHED','0.35mm'],
-      ['DOOR','Doors',4,'Continuous','0.35mm'],
-      ['DOOR-DEMO','Demo Doors',1,'DASHED','0.25mm'],
-      ['GLAZ','Glazing',4,'Continuous','0.25mm'],
-      ['GLAZ-VERT','Curtain Wall',4,'Continuous','0.35mm'],
-      ['CLNG','Ceiling / RCP',3,'HIDDEN','0.25mm'],
-      ['CLNG-EQPM','Ceiling Equipment',3,'HIDDEN','0.18mm'],
-      ['FLOR','Floor / Slab',8,'Continuous','0.18mm'],
-      ['FLOR-PATT','Floor Finish',9,'Continuous','0.09mm'],
-      ['FURN','Furniture — Fixed',2,'Continuous','0.18mm'],
-      ['FURN-MOVE','Furniture — Movable',2,'Continuous','0.09mm'],
-      ['EQPM','Equipment',2,'Continuous','0.18mm'],
-      ['COLS','Columns',5,'Continuous','0.50mm'],
-      ['STRS','Stairs',5,'Continuous','0.35mm'],
-      ['ROOF','Roof / Overhang',8,'HIDDEN','0.25mm'],
-      ['SITE','Site / Property',6,'Continuous','0.35mm'],
-      ['XREF','External References',9,'Continuous','0.00mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-SYMB','Symbols & Tags',3,'Continuous','0.25mm'],
-      ['ANNO-KEYN','Keynotes',3,'Continuous','0.18mm'],
-      ['ANNO-LEGN','Legend',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['WALL',      'Exterior and interior walls — load-bearing and partition',          5,'Continuous','0.50mm'],
+      ['WALL-PATT', 'Wall section hatch and fill — plot thin or screened',               8,'Continuous','0.09mm'],
+      ['WALL-DEMO', 'Walls to be demolished — confirmed removal scope',                  1,'DASHED',    '0.35mm'],
+      ['COLS',      'Structural columns and pilasters',                                  5,'Continuous','0.50mm'],
+      ['DOOR',      'Door panels, frames, and swing arcs',                               4,'Continuous','0.35mm'],
+      ['DOOR-DEMO', 'Doors scheduled for removal',                                       1,'DASHED',    '0.25mm'],
+      ['GLAZ',      'Windows, glazed openings, and storefront systems',                  4,'Continuous','0.25mm'],
+      ['GLAZ-VERT', 'Curtain wall mullions and floor-to-ceiling glazing systems',        4,'Continuous','0.35mm'],
+      ['CLNG',      'Reflected ceiling plan elements — shown dashed in floor plan',      3,'HIDDEN',    '0.25mm'],
+      ['CLNG-EQPM', 'Ceiling-mounted equipment — fixtures, diffusers, sprinklers',      3,'HIDDEN',    '0.18mm'],
+      ['STRS',      'Stair treads, risers, landings, and handrails',                     5,'Continuous','0.35mm'],
+      ['FLOR',      'Floor slab edge, topping, and level transitions',                   8,'Continuous','0.18mm'],
+      ['FLOR-PATT', 'Floor finish patterns and tile layout — plot screened',             9,'Continuous','0.09mm'],
+      ['FURN',      'Furniture — fixed casework, built-ins, and FF&E layout',            2,'Continuous','0.18mm'],
+      ['FURN-MOVE', 'Movable furniture — loose FF&E and owner-furnished items',          2,'Continuous','0.09mm'],
+      ['EQPM',      'Specialty equipment, appliances, and installed items',              2,'Continuous','0.18mm'],
+      ['ROOF',      'Roof outline and overhang shown dashed in plan',                    8,'HIDDEN',    '0.25mm'],
+      ['SITE',      'Site boundary, property context, and immediate surroundings',       6,'Continuous','0.35mm'],
+      ['XREF',      'External reference file indicators — do not plot',                  9,'Continuous','0.00mm'],
+      ['ANNO-DIMS', 'Dimension strings, leaders, and running dimensions',                3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'General notes, room names, and text callouts',                      3,'Continuous','0.18mm'],
+      ['ANNO-SYMB', 'Room tags, door numbers, detail bubbles, and section markers',      3,'Continuous','0.25mm'],
+      ['ANNO-KEYN', 'Keynote callouts referencing specification sections',               3,'Continuous','0.18mm'],
+      ['ANNO-LEGN', 'Drawing legend and material key',                                   3,'Continuous','0.18mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['ANNO-VPRT', 'Viewport borders — do not plot',                                    8,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
   },
   Civil:{
     minimal:[
-      ['PROP','Property Line',1,'Continuous','0.50mm'],
-      ['TOPO-E','Existing Contours',8,'Continuous','0.18mm'],
-      ['TOPO-P','Proposed Contours',3,'Continuous','0.25mm'],
-      ['BLDG','Building Footprint',5,'Continuous','0.35mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['PROP',      'Property line and legal boundary',                                  1,'Continuous','0.50mm'],
+      ['TOPO-E',    'Existing contour lines — major intervals',                          8,'Continuous','0.18mm'],
+      ['TOPO-P',    'Proposed finish grade contours',                                    3,'Continuous','0.25mm'],
+      ['BLDG',      'Building footprint outline',                                        5,'Continuous','0.35mm'],
+      ['ANNO-DIMS', 'Horizontal dimensions, bearings, and lot data',                     3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'General notes, callouts, and labels',                               3,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     standard:[
-      ['PROP','Property Line',1,'Continuous','0.50mm'],
-      ['ESMT','Easement',6,'DASHED','0.25mm'],
-      ['TOPO-E','Existing Contours',8,'Continuous','0.18mm'],
-      ['TOPO-P','Proposed Contours',3,'Continuous','0.25mm'],
-      ['BLDG','Building Footprint',5,'Continuous','0.35mm'],
-      ['ROAD-CURB','Curb & Gutter',7,'Continuous','0.35mm'],
-      ['ROAD-PVMT','Pavement',8,'Continuous','0.18mm'],
-      ['UTIL-WATR','Water Line',4,'Continuous','0.25mm'],
-      ['UTIL-SEWR','Sewer Line',2,'Continuous','0.25mm'],
-      ['UTIL-STRM','Storm Drain',6,'Continuous','0.25mm'],
-      ['UTIL-ELEC','Electrical UG',3,'Continuous','0.25mm'],
-      ['LAND-TREE','Trees',3,'Continuous','0.25mm'],
-      ['SURV','Survey / Control',1,'Continuous','0.25mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['PROP',      'Property line and legal boundary',                                  1,'Continuous','0.50mm'],
+      ['ROW',       'Right-of-way boundary',                                             1,'CENTER',    '0.35mm'],
+      ['ESMT',      'Easements — type noted per object',                                 6,'DASHED',    '0.25mm'],
+      ['TOPO-E',    'Existing contour lines — major intervals',                          8,'Continuous','0.18mm'],
+      ['TOPO-P',    'Proposed finish grade contours',                                    3,'Continuous','0.25mm'],
+      ['BLDG',      'Building footprint outline',                                        5,'Continuous','0.35mm'],
+      ['ROAD-CURB', 'Curb and gutter — face and back of curb',                           7,'Continuous','0.35mm'],
+      ['ROAD-PVMT', 'Pavement edge and surface treatment',                               8,'Continuous','0.18mm'],
+      ['UTIL-WATR', 'Domestic water line — potable supply',                              4,'Continuous','0.25mm'],
+      ['UTIL-SEWR', 'Sanitary sewer line and manholes',                                  2,'Continuous','0.25mm'],
+      ['UTIL-STRM', 'Storm drain, inlets, and drainage structures',                      6,'Continuous','0.25mm'],
+      ['UTIL-ELEC', 'Underground electrical conduit and ductbank',                       3,'Continuous','0.25mm'],
+      ['LAND-TREE', 'Individual trees — existing and proposed',                          3,'Continuous','0.25mm'],
+      ['SURV',      'Survey control network, benchmarks, and control points',            1,'Continuous','0.25mm'],
+      ['ANNO-DIMS', 'Horizontal dimensions, bearings, and lot data',                     3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'General notes, callouts, and labels',                               3,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     full:[
-      ['PROP','Property Line',1,'Continuous','0.50mm'],
-      ['ESMT','Easement',6,'DASHED','0.25mm'],
-      ['ESMT-UTIL','Utility Easement',6,'PHANTOM','0.18mm'],
-      ['ROW','Right-of-Way',1,'CENTER','0.35mm'],
-      ['TOPO-E','Existing Contours Major',8,'Continuous','0.25mm'],
-      ['TOPO-E-MN','Existing Contours Minor',8,'Continuous','0.09mm'],
-      ['TOPO-P','Proposed Contours Major',3,'Continuous','0.35mm'],
-      ['TOPO-P-MN','Proposed Contours Minor',3,'Continuous','0.18mm'],
-      ['BLDG','Building Footprint',5,'Continuous','0.35mm'],
-      ['ROAD-CURB','Curb & Gutter',7,'Continuous','0.35mm'],
-      ['ROAD-PVMT','Pavement',8,'Continuous','0.18mm'],
-      ['ROAD-WALK','Sidewalk',8,'Continuous','0.18mm'],
-      ['UTIL-WATR','Water Line',4,'Continuous','0.25mm'],
-      ['UTIL-SEWR','Sanitary Sewer',2,'Continuous','0.25mm'],
-      ['UTIL-STRM','Storm Drain',6,'Continuous','0.25mm'],
-      ['UTIL-ELEC','Electrical UG',3,'Continuous','0.25mm'],
-      ['UTIL-GAS','Gas Line',1,'PHANTOM','0.25mm'],
-      ['UTIL-TELE','Telecom / Data',4,'Continuous','0.18mm'],
-      ['LAND-TREE','Trees',3,'Continuous','0.25mm'],
-      ['LAND-SHRU','Shrubs',3,'Continuous','0.18mm'],
-      ['LAND-SOD','Sod / Lawn',3,'Continuous','0.09mm'],
-      ['SURV','Survey Control',1,'Continuous','0.25mm'],
-      ['SURV-MNMT','Survey Monuments',1,'Continuous','0.35mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-ELEV','Spot Elevations',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['PROP',      'Property line and legal boundary',                                  1,'Continuous','0.50mm'],
+      ['ROW',       'Right-of-way boundary',                                             1,'CENTER',    '0.35mm'],
+      ['ESMT',      'Easements — type noted per object',                                 6,'DASHED',    '0.25mm'],
+      ['ESMT-UTIL', 'Utility easement overlay',                                          6,'PHANTOM',   '0.18mm'],
+      ['TOPO-E',    'Existing major contour lines',                                      8,'Continuous','0.25mm'],
+      ['TOPO-E-MN', 'Existing minor contours — plot screened',                           8,'Continuous','0.09mm'],
+      ['TOPO-P',    'Proposed major finish grade contours',                              3,'Continuous','0.35mm'],
+      ['TOPO-P-MN', 'Proposed minor finish grade contours',                              3,'Continuous','0.18mm'],
+      ['BLDG',      'Building footprint outline',                                        5,'Continuous','0.35mm'],
+      ['ROAD-CURB', 'Curb and gutter — face and back of curb',                           7,'Continuous','0.35mm'],
+      ['ROAD-PVMT', 'Pavement edge and surface treatment',                               8,'Continuous','0.18mm'],
+      ['ROAD-WALK', 'Sidewalks, pedestrian paths, and accessible routes',                8,'Continuous','0.18mm'],
+      ['UTIL-WATR', 'Domestic water line — potable supply',                              4,'Continuous','0.25mm'],
+      ['UTIL-SEWR', 'Sanitary sewer line and manholes',                                  2,'Continuous','0.25mm'],
+      ['UTIL-STRM', 'Storm drain, inlets, and drainage structures',                      6,'Continuous','0.25mm'],
+      ['UTIL-ELEC', 'Underground electrical conduit and ductbank',                       3,'Continuous','0.25mm'],
+      ['UTIL-GAS',  'Natural gas line — high and low pressure',                          1,'PHANTOM',   '0.25mm'],
+      ['UTIL-TELE', 'Telecommunications conduit and fiber runs',                         4,'Continuous','0.18mm'],
+      ['LAND-TREE', 'Individual trees — existing and proposed',                          3,'Continuous','0.25mm'],
+      ['LAND-SHRU', 'Shrub masses and groundcover planting areas',                       3,'Continuous','0.18mm'],
+      ['LAND-SOD',  'Lawn, sod, and turf areas — plot screened',                         3,'Continuous','0.09mm'],
+      ['SURV',      'Survey control network, benchmarks, and control points',            1,'Continuous','0.25mm'],
+      ['SURV-MNMT', 'Survey monuments, pins, and found corners',                         1,'Continuous','0.35mm'],
+      ['ANNO-DIMS', 'Horizontal dimensions, bearings, and lot data',                     3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'General notes, callouts, and labels',                               3,'Continuous','0.18mm'],
+      ['ANNO-ELEV', 'Spot elevations and finish grade callouts',                         3,'Continuous','0.18mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['ANNO-VPRT', 'Viewport borders — do not plot',                                    8,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
   },
   MEP:{
     minimal:[
-      ['DUCT-S','Supply Ductwork',1,'Continuous','0.35mm'],
-      ['DUCT-R','Return Ductwork',2,'Continuous','0.35mm'],
-      ['PIPE-CW','Chilled Water',4,'Continuous','0.25mm'],
-      ['ELEC-LITE','Lighting',3,'Continuous','0.18mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['DUCT-S',    'Supply air ductwork',                                               1,'Continuous','0.35mm'],
+      ['DUCT-R',    'Return air ductwork',                                               2,'Continuous','0.35mm'],
+      ['PIPE-CW',   'Chilled water supply piping',                                       4,'Continuous','0.25mm'],
+      ['ELEC-LITE', 'Lighting fixtures and switching circuiting',                        3,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Elevation callouts and critical dimension strings',                 3,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     standard:[
-      ['DUCT-S','Supply Ductwork',1,'Continuous','0.35mm'],
-      ['DUCT-R','Return Ductwork',2,'Continuous','0.35mm'],
-      ['DUCT-E','Exhaust Ductwork',4,'Continuous','0.25mm'],
-      ['MECH-EQPM','Mechanical Equipment',1,'Continuous','0.35mm'],
-      ['PIPE-CW','Chilled Water',4,'Continuous','0.25mm'],
-      ['PIPE-HW','Hot Water',1,'Continuous','0.25mm'],
-      ['PIPE-COND','Condensate',8,'Continuous','0.18mm'],
-      ['ELEC-PANL','Electrical Panels',2,'Continuous','0.35mm'],
-      ['ELEC-COND','Conduit',2,'Continuous','0.25mm'],
-      ['ELEC-LITE','Lighting',3,'Continuous','0.18mm'],
-      ['ELEC-FIRE','Fire Alarm',1,'Continuous','0.25mm'],
-      ['PLMB-CW','Cold Water',4,'Continuous','0.25mm'],
-      ['PLMB-HW','Hot Water Supply',1,'Continuous','0.25mm'],
-      ['PLMB-SAN','Sanitary Drain',2,'Continuous','0.25mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['DUCT-S',    'Supply air ductwork',                                               1,'Continuous','0.35mm'],
+      ['DUCT-R',    'Return air ductwork',                                               2,'Continuous','0.35mm'],
+      ['DUCT-E',    'Exhaust and relief air ductwork',                                   4,'Continuous','0.25mm'],
+      ['MECH-EQPM','Mechanical equipment — AHUs, RTUs, and fan coils',                  1,'Continuous','0.35mm'],
+      ['PIPE-CW',   'Chilled water supply piping',                                       4,'Continuous','0.25mm'],
+      ['PIPE-HW',   'Heating hot water supply and return piping',                        1,'Continuous','0.25mm'],
+      ['PIPE-COND', 'Condensate drain piping',                                           8,'Continuous','0.18mm'],
+      ['ELEC-PANL', 'Electrical panels and distribution boards',                         2,'Continuous','0.35mm'],
+      ['ELEC-COND', 'Conduit runs and wireways',                                         2,'Continuous','0.25mm'],
+      ['ELEC-LITE', 'Lighting fixtures and switching circuiting',                        3,'Continuous','0.18mm'],
+      ['ELEC-FIRE', 'Fire alarm devices — pull stations, horns, and strobes',            1,'Continuous','0.25mm'],
+      ['PLMB-CW',   'Cold domestic water supply piping',                                 4,'Continuous','0.25mm'],
+      ['PLMB-HW',   'Hot domestic water supply piping',                                  1,'Continuous','0.25mm'],
+      ['PLMB-SAN',  'Sanitary waste and drain piping',                                   2,'Continuous','0.25mm'],
+      ['ANNO-DIMS', 'Elevation callouts and critical dimension strings',                 3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Equipment tags, callouts, and general notes',                       3,'Continuous','0.18mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     full:[
-      ['DUCT-S','Supply Ductwork',1,'Continuous','0.35mm'],
-      ['DUCT-S-LNG','Supply Ductwork Lining',1,'HIDDEN','0.18mm'],
-      ['DUCT-R','Return Ductwork',2,'Continuous','0.35mm'],
-      ['DUCT-E','Exhaust Ductwork',4,'Continuous','0.25mm'],
-      ['DUCT-OA','Outside Air',3,'Continuous','0.25mm'],
-      ['MECH-EQPM','Mechanical Equipment',1,'Continuous','0.50mm'],
-      ['MECH-PIPE','Mechanical Piping',6,'Continuous','0.25mm'],
-      ['PIPE-CW','Chilled Water Supply',4,'Continuous','0.25mm'],
-      ['PIPE-CR','Chilled Water Return',4,'HIDDEN','0.25mm'],
-      ['PIPE-HWS','Hot Water Supply',1,'Continuous','0.25mm'],
-      ['PIPE-HWR','Hot Water Return',1,'HIDDEN','0.25mm'],
-      ['PIPE-COND','Condensate',8,'Continuous','0.18mm'],
-      ['PIPE-REFR','Refrigerant',6,'Continuous','0.18mm'],
-      ['ELEC-PANL','Electrical Panels',2,'Continuous','0.50mm'],
-      ['ELEC-SWBD','Switchboards / MCC',2,'Continuous','0.35mm'],
-      ['ELEC-COND','Conduit / Raceway',2,'Continuous','0.25mm'],
-      ['ELEC-LITE','Lighting Fixtures',3,'Continuous','0.18mm'],
-      ['ELEC-FIRE','Fire Alarm',1,'Continuous','0.25mm'],
-      ['ELEC-DATA','Data / Low Voltage',4,'Continuous','0.18mm'],
-      ['PLMB-CW','Cold Water',4,'Continuous','0.25mm'],
-      ['PLMB-HW','Hot Water',1,'Continuous','0.25mm'],
-      ['PLMB-SAN','Sanitary Drain',2,'Continuous','0.25mm'],
-      ['PLMB-VENT','Plumbing Vent',6,'Continuous','0.18mm'],
-      ['PLMB-FIXT','Fixtures',8,'Continuous','0.18mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-EQPM','Equipment Tags',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['DUCT-S',    'Supply air ductwork',                                               1,'Continuous','0.35mm'],
+      ['DUCT-S-LNG','Supply duct acoustic lining — shown dashed inside duct outline',    1,'HIDDEN',    '0.18mm'],
+      ['DUCT-R',    'Return air ductwork',                                               2,'Continuous','0.35mm'],
+      ['DUCT-E',    'Exhaust and relief air ductwork',                                   4,'Continuous','0.25mm'],
+      ['DUCT-OA',   'Outside air and makeup air ductwork',                               3,'Continuous','0.25mm'],
+      ['MECH-EQPM','Mechanical equipment — AHUs, RTUs, and fan coils',                  1,'Continuous','0.50mm'],
+      ['MECH-PIPE', 'Miscellaneous mechanical piping not otherwise classified',          6,'Continuous','0.25mm'],
+      ['PIPE-CW',   'Chilled water supply piping',                                       4,'Continuous','0.25mm'],
+      ['PIPE-CR',   'Chilled water return piping — shown dashed',                        4,'HIDDEN',    '0.25mm'],
+      ['PIPE-HWS',  'Heating hot water supply piping',                                   1,'Continuous','0.25mm'],
+      ['PIPE-HWR',  'Heating hot water return piping — shown dashed',                    1,'HIDDEN',    '0.25mm'],
+      ['PIPE-COND', 'Condensate drain piping',                                           8,'Continuous','0.18mm'],
+      ['PIPE-REFR', 'Refrigerant piping — liquid and suction lines',                     6,'Continuous','0.18mm'],
+      ['ELEC-PANL', 'Electrical panels and distribution boards',                         2,'Continuous','0.50mm'],
+      ['ELEC-SWBD', 'Switchboards, MCCs, and main distribution equipment',               2,'Continuous','0.35mm'],
+      ['ELEC-COND', 'Conduit runs and wireways',                                         2,'Continuous','0.25mm'],
+      ['ELEC-LITE', 'Lighting fixtures and switching circuiting',                        3,'Continuous','0.18mm'],
+      ['ELEC-FIRE', 'Fire alarm devices — pull stations, horns, and strobes',            1,'Continuous','0.25mm'],
+      ['ELEC-DATA', 'Low voltage, data, and communications conduit',                     4,'Continuous','0.18mm'],
+      ['PLMB-CW',   'Cold domestic water supply piping',                                 4,'Continuous','0.25mm'],
+      ['PLMB-HW',   'Hot domestic water supply piping',                                  1,'Continuous','0.25mm'],
+      ['PLMB-SAN',  'Sanitary waste and drain piping',                                   2,'Continuous','0.25mm'],
+      ['PLMB-VENT', 'Plumbing vent piping through roof',                                 6,'Continuous','0.18mm'],
+      ['PLMB-FIXT', 'Plumbing fixtures — sinks, toilets, drains, and floor drains',     8,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Elevation callouts and critical dimension strings',                 3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Equipment tags, callouts, and general notes',                       3,'Continuous','0.18mm'],
+      ['ANNO-EQPM', 'Equipment schedule tags and identifier bubbles',                    3,'Continuous','0.18mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['ANNO-VPRT', 'Viewport borders — do not plot',                                    8,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
   },
   Structural:{
     minimal:[
-      ['COLS','Columns',5,'Continuous','0.50mm'],
-      ['BEAM','Beams / Framing',4,'HIDDEN','0.35mm'],
-      ['FNDN','Foundation',8,'Continuous','0.25mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['COLS',      'Structural columns and pilasters — all materials',                  5,'Continuous','0.50mm'],
+      ['BEAM',      'Primary beams and framing members',                                 4,'HIDDEN',    '0.35mm'],
+      ['FNDN',      'Foundation walls and grade beams',                                  8,'Continuous','0.25mm'],
+      ['ANNO-DIMS', 'Structural dimensions, gridlines, and column labels',               3,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     standard:[
-      ['COLS','Columns',5,'Continuous','0.50mm'],
-      ['BEAM','Beams — Steel',4,'HIDDEN','0.35mm'],
-      ['BEAM-WD','Beams — Wood',2,'HIDDEN','0.35mm'],
-      ['BRAC','Bracing',6,'CENTER','0.25mm'],
-      ['DECK','Deck / Slab',8,'Continuous','0.18mm'],
-      ['FNDN','Foundation',8,'Continuous','0.35mm'],
-      ['FNDN-FTG','Footings',8,'HIDDEN','0.25mm'],
-      ['WALL-BRG','Bearing Walls',5,'Continuous','0.50mm'],
-      ['WALL-SHR','Shear Walls',1,'Continuous','0.35mm'],
-      ['OPNG','Openings / Holes',3,'DASHED','0.18mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-SYMB','Symbols',3,'Continuous','0.25mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['COLS',      'Structural columns and pilasters — all materials',                  5,'Continuous','0.50mm'],
+      ['BEAM',      'Primary steel beams and framing members — shown dashed in plan',    4,'HIDDEN',    '0.35mm'],
+      ['BEAM-WD',   'Wood beams, headers, and LVL members — shown dashed',               2,'HIDDEN',    '0.35mm'],
+      ['BRAC',      'Steel bracing and moment frames',                                   6,'CENTER',    '0.25mm'],
+      ['DECK',      'Metal deck and composite slab system',                              8,'Continuous','0.18mm'],
+      ['FNDN',      'Foundation walls and grade beams',                                  8,'Continuous','0.35mm'],
+      ['FNDN-FTG',  'Spread and strip footings — shown dashed in plan',                  8,'HIDDEN',    '0.25mm'],
+      ['WALL-BRG',  'Bearing walls carrying gravity load',                               5,'Continuous','0.50mm'],
+      ['WALL-SHR',  'Shear walls and lateral force resisting elements',                  1,'Continuous','0.35mm'],
+      ['OPNG',      'Floor and wall openings, penetrations, and blockouts',              3,'DASHED',    '0.18mm'],
+      ['ANNO-DIMS', 'Structural dimensions, gridlines, and column labels',               3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Structural notes, member callouts, and specification references',   3,'Continuous','0.18mm'],
+      ['ANNO-SYMB', 'Section cuts, detail bubbles, and grid circles',                   3,'Continuous','0.25mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     full:[
-      ['COLS','Columns — Steel',5,'Continuous','0.50mm'],
-      ['COLS-CONC','Columns — Concrete',5,'Continuous','0.50mm'],
-      ['BEAM','Beams — Steel W',4,'HIDDEN','0.35mm'],
-      ['BEAM-HSS','HSS / Tube Steel',4,'HIDDEN','0.25mm'],
-      ['BEAM-WD','Beams — Wood',2,'HIDDEN','0.35mm'],
-      ['BEAM-LVL','LVL / Engineered Wood',2,'HIDDEN','0.25mm'],
-      ['BRAC','Steel Bracing',6,'CENTER','0.25mm'],
-      ['BRAC-WD','Wood Bracing / Sheathing',2,'CENTER','0.18mm'],
-      ['DECK','Metal Deck',8,'Continuous','0.18mm'],
-      ['DECK-CONC','Concrete Slab on Deck',8,'Continuous','0.09mm'],
-      ['FNDN','Foundation Wall',8,'Continuous','0.35mm'],
-      ['FNDN-FTG','Footings',8,'HIDDEN','0.25mm'],
-      ['FNDN-PILE','Piles / Piers',9,'HIDDEN','0.25mm'],
-      ['WALL-BRG','Bearing Walls',5,'Continuous','0.50mm'],
-      ['WALL-SHR','Shear Walls',1,'Continuous','0.35mm'],
-      ['WALL-CONC','Concrete Walls',5,'Continuous','0.50mm'],
-      ['JOIST','Bar Joists / Open Web',4,'Continuous','0.18mm'],
-      ['JOIST-WD','Wood Joists',2,'Continuous','0.18mm'],
-      ['OPNG','Openings / Penetrations',3,'DASHED','0.18mm'],
-      ['EMBED','Embeds / Plates',6,'Continuous','0.25mm'],
-      ['WELD','Weld Symbols',7,'Continuous','0.18mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-SYMB','Symbols / Tags',3,'Continuous','0.25mm'],
-      ['ANNO-SKED','Schedules',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['COLS',      'Steel columns — wide flange and HSS',                               5,'Continuous','0.50mm'],
+      ['COLS-CONC', 'Concrete columns — cast-in-place and precast',                      5,'Continuous','0.50mm'],
+      ['BEAM',      'Steel wide flange beams — shown dashed in plan',                    4,'HIDDEN',    '0.35mm'],
+      ['BEAM-HSS',  'HSS and tube steel members — shown dashed',                         4,'HIDDEN',    '0.25mm'],
+      ['BEAM-WD',   'Sawn lumber and LVL beams — shown dashed',                          2,'HIDDEN',    '0.35mm'],
+      ['BEAM-LVL',  'Engineered lumber — PSL, LSL, and glulam',                          2,'HIDDEN',    '0.25mm'],
+      ['BRAC',      'Steel bracing and moment frames',                                   6,'CENTER',    '0.25mm'],
+      ['BRAC-WD',   'Wood shear panels, blocking, and strap bracing',                    2,'CENTER',    '0.18mm'],
+      ['DECK',      'Metal deck system',                                                 8,'Continuous','0.18mm'],
+      ['DECK-CONC', 'Concrete slab on deck — slab thickness notation',                   8,'Continuous','0.09mm'],
+      ['FNDN',      'Foundation walls and grade beams',                                  8,'Continuous','0.35mm'],
+      ['FNDN-FTG',  'Spread and strip footings — shown dashed in plan',                  8,'HIDDEN',    '0.25mm'],
+      ['FNDN-PILE', 'Piles, piers, and deep foundation elements',                        9,'HIDDEN',    '0.25mm'],
+      ['WALL-BRG',  'Bearing walls carrying gravity load',                               5,'Continuous','0.50mm'],
+      ['WALL-SHR',  'Shear walls and lateral force resisting elements',                  1,'Continuous','0.35mm'],
+      ['WALL-CONC', 'Cast-in-place and tilt-up concrete walls',                          5,'Continuous','0.50mm'],
+      ['JOIST',     'Open web steel bar joists — plan view',                             4,'Continuous','0.18mm'],
+      ['JOIST-WD',  'Wood I-joists and engineered floor system',                         2,'Continuous','0.18mm'],
+      ['OPNG',      'Floor and wall openings, penetrations, and blockouts',              3,'DASHED',    '0.18mm'],
+      ['EMBED',     'Embedded plates, anchor bolts, and cast-in hardware',               6,'Continuous','0.25mm'],
+      ['WELD',      'Weld symbols and connection detail callouts',                       7,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Structural dimensions, gridlines, and column labels',               3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Structural notes, member callouts, and specification references',   3,'Continuous','0.18mm'],
+      ['ANNO-SYMB', 'Section cuts, detail bubbles, and grid circles',                   3,'Continuous','0.25mm'],
+      ['ANNO-SKED', 'Column, beam, and footing schedule tables',                         3,'Continuous','0.18mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['ANNO-VPRT', 'Viewport borders — do not plot',                                    8,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
   },
   LiveEvents:{
     minimal:[
-      ['STGE','Stage / Platform',5,'Continuous','0.50mm'],
-      ['LITE','Lighting',2,'Continuous','0.25mm'],
-      ['AUDI','Audio',4,'Continuous','0.25mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['BLDG-WALL', 'Permanent venue walls, perimeter structure, and room dividers',    7,'Continuous','0.50mm'],
+      ['BLDG-DIMS', 'Key venue dimensions — critical for production planning',           6,'Continuous','0.18mm'],
+      ['STAGE',     'Stage decks, platforms, and production risers',                     5,'Continuous','0.50mm'],
+      ['DECO',      'Furniture, drape, tables, chairs, and event deco elements',         30,'Continuous','0.25mm'],
+      ['ANNO-TEXT', 'Room labels, area names, and general annotation',                   3,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Setup dimensions and production clearance callouts',                6,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     standard:[
-      ['STGE','Stage / Platform',5,'Continuous','0.50mm'],
-      ['STGE-STAIR','Stage Stairs',5,'Continuous','0.35mm'],
-      ['RIGG','Rigging / Motors',1,'Continuous','0.35mm'],
-      ['RIGG-TRUSS','Truss / Ground Support',4,'Continuous','0.35mm'],
-      ['LITE-FOH','FOH Lighting',2,'Continuous','0.25mm'],
-      ['POWR','Power Distribution',1,'Continuous','0.25mm'],
-      ['AUDI','Audio / Speakers',4,'Continuous','0.25mm'],
-      ['VIDO','Video / LED',3,'Continuous','0.25mm'],
-      ['SEATING','Audience Seating',8,'Continuous','0.18mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['BLDG-WALL', 'Permanent venue walls, perimeter structure, and room dividers',    7,'Continuous','0.50mm'],
+      ['BLDG-COLS', 'Structural columns and load-bearing features with capacity notes',  252,'Continuous','0.35mm'],
+      ['BLDG-DOOR', 'Doors, roll-up doors, loading dock entries, and major openings',    5,'Continuous','0.25mm'],
+      ['BLDG-ELEC', 'Electrical port locations — port numbers and capacity labeled',     3,'Continuous','0.18mm'],
+      ['BLDG-FIRE', 'Fire exits, hose bibs, pull stations, and fire marshal geometry',  1,'Continuous','0.18mm'],
+      ['BLDG-DIMS', 'Key venue dimensions — critical for production planning',           6,'Continuous','0.18mm'],
+      ['STAGE',     'Stage decks, platforms, and production risers',                     5,'Continuous','0.50mm'],
+      ['STAGE-STAIR','Stage stairs, ramps, and ADA access points',                       5,'Continuous','0.35mm'],
+      ['RIGG',      'Rigging points and chain motors — rated capacity labeled',          1,'Continuous','0.35mm'],
+      ['TRUSS',     'Truss and ground support overhead production structure',             30,'Continuous','0.35mm'],
+      ['LITE',      'Lighting fixtures, positions, and universe assignments',             2,'Continuous','0.25mm'],
+      ['AUDIO',     'Speaker clusters, delay fills, subwoofers, and mix positions',      4,'Continuous','0.25mm'],
+      ['VIDEO',     'LED walls, projection screens, and camera positions',               140,'Continuous','0.25mm'],
+      ['POWER',     'Power distribution, generators, and distro locations',              6,'DASHED',    '0.25mm'],
+      ['DECO',      'Furniture, drape, tables, chairs, and event deco elements',         30,'Continuous','0.25mm'],
+      ['SIGN',      'Signage, banners, graphics, and branding elements',                 3,'Continuous','0.18mm'],
+      ['SEATING',   'Audience seating blocks, GA floor zones, and pit areas',            9,'Continuous','0.18mm'],
+      ['ANNO-TEXT', 'Room labels, area names, and general annotation',                   3,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Setup dimensions and production clearance callouts',                6,'Continuous','0.18mm'],
+      ['PAGE-VPRT', 'Viewport borders — do not plot',                                    9,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     full:[
-      ['STGE','Stage — Main',5,'Continuous','0.50mm'],
-      ['STGE-B','B-Stage / Thrust',5,'Continuous','0.35mm'],
-      ['STGE-STAIR','Stage Stairs',5,'Continuous','0.35mm'],
-      ['STGE-DECK','Deck Surface',8,'Continuous','0.18mm'],
-      ['RIGG','Rigging Points',1,'Continuous','0.50mm'],
-      ['RIGG-TRUSS','Truss',4,'Continuous','0.35mm'],
-      ['TENT','Tent / Structure',6,'Continuous','0.35mm'],
-      ['LITE-FOH','FOH Lighting',2,'Continuous','0.25mm'],
-      ['LITE-WASH','Wash Lights',2,'Continuous','0.18mm'],
-      ['LITE-SPOT','Followspots',2,'Continuous','0.18mm'],
-      ['LITE-CIRC','Lighting Circuits',2,'HIDDEN','0.09mm'],
-      ['POWR-MAIN','Main Power',1,'Continuous','0.35mm'],
-      ['POWR-DIST','Power Distribution',1,'Continuous','0.25mm'],
-      ['AUDI-MAIN','Main PA',4,'Continuous','0.25mm'],
-      ['AUDI-FILL','Delay / Fill',4,'Continuous','0.18mm'],
-      ['AUDI-MIX','Mix Positions',4,'Continuous','0.25mm'],
-      ['VIDO-SCRN','Video Screens',3,'Continuous','0.35mm'],
-      ['VIDO-CAM','Camera Positions',3,'Continuous','0.18mm'],
-      ['DECO','Decor',6,'Continuous','0.18mm'],
-      ['SEATING','Seating',8,'Continuous','0.18mm'],
-      ['SEATING-GA','GA / Pit',8,'Continuous','0.09mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-ZONE','Zone Labels',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['BLDG-WALL', 'Permanent venue walls, perimeter structure, and room dividers',    7,'Continuous','0.50mm'],
+      ['BLDG-COLS', 'Structural columns and load-bearing features with capacity notes',  252,'Continuous','0.35mm'],
+      ['BLDG-DOOR', 'Doors, roll-up doors, loading dock entries, and major openings',    5,'Continuous','0.25mm'],
+      ['BLDG-CEIL', 'Ceiling height changes, soffits, and overhead features',            4,'HIDDEN',    '0.18mm'],
+      ['BLDG-CATW', 'Catwalks, tech galleries, and permanent overhead access structures',4,'Continuous','0.25mm'],
+      ['BLDG-HANG', 'Structural hang points with rated load capacity — verify with venue',254,'Continuous','0.25mm'],
+      ['BLDG-REST', 'Restricted zones, mandatory egress paths, and height clearances',   253,'PHANTOM',  '0.18mm'],
+      ['BLDG-STPS', 'Stairs, escalators, freight elevators, and level transitions',      1,'Continuous','0.25mm'],
+      ['BLDG-UTIL', 'Utility ports — water, compressed air, gas (not electrical)',       4,'Continuous','0.18mm'],
+      ['BLDG-ELEC', 'Electrical port locations — port numbers and capacity labeled',     3,'Continuous','0.18mm'],
+      ['BLDG-FIRE', 'Fire exits, hose bibs, pull stations, and fire marshal geometry',  1,'Continuous','0.18mm'],
+      ['BLDG-AIRW', 'Airwalls in closed position — active room sub-division',            30,'Continuous','0.25mm'],
+      ['BLDG-AIRW-OFF','Airwalls in open/stored position — not sub-dividing space',      31,'HIDDEN',    '0.18mm'],
+      ['BLDG-FEAT', 'Architectural features — fountains, railings, planters, windows',   3,'Continuous','0.18mm'],
+      ['BLDG-DIMS', 'Key venue dimensions — critical for production planning',           6,'Continuous','0.18mm'],
+      ['STAGE',     'Stage decks, platforms, and production risers',                     5,'Continuous','0.50mm'],
+      ['STAGE-STAIR','Stage stairs, ramps, and ADA access points',                       5,'Continuous','0.35mm'],
+      ['STAGE-DECK','Stage deck surface finish, fascia treatment, and skirting',         8,'Continuous','0.18mm'],
+      ['RIGG',      'Primary rigging points and chain motors — rated capacity labeled',  1,'Continuous','0.35mm'],
+      ['RIGG-SEC',  'Secondary rigging — pre-rig trusses and sub-hung points',           30,'Continuous','0.25mm'],
+      ['TRUSS',     'Main truss and ground support overhead production structure',        30,'Continuous','0.35mm'],
+      ['LITE',      'Lighting fixtures, positions, and universe assignments',             2,'Continuous','0.25mm'],
+      ['LITE-FOH',  'Front-of-house lighting positions and followspot perches',          2,'Continuous','0.25mm'],
+      ['LITE-CIRC', 'Lighting circuits, dimmer homeruns, and data cable routes',         2,'HIDDEN',    '0.09mm'],
+      ['AUDIO',     'Main PA clusters, delays, fills, and subwoofers',                   4,'Continuous','0.25mm'],
+      ['AUDIO-MON', 'Monitor world — wedges, side fills, and IEM rack positions',        4,'Continuous','0.18mm'],
+      ['VIDEO',     'LED walls, projection surfaces, and display positions',              140,'Continuous','0.25mm'],
+      ['VIDEO-CAM', 'Camera positions, risers, handheld zones, and video village',       140,'Continuous','0.18mm'],
+      ['POWER',     'Power distribution, generator locations, and distro positions',     6,'DASHED',    '0.25mm'],
+      ['POWER-DIST','Power feeder and branch cable routing paths',                        6,'DASHED',    '0.18mm'],
+      ['BACKLINE',  'Backline equipment — amplifier racks, instrument positions, risers',9,'Continuous','0.18mm'],
+      ['PYRO-SFX',  'Pyrotechnic positions, SFX equipment, and safety exclusion zones',  1,'PHANTOM',   '0.25mm'],
+      ['BARR',      'Crowd barriers, bike rack, and security perimeter elements',         7,'Continuous','0.25mm'],
+      ['BOOTH',     'Expo booth footprints and exhibit space outlines',                   5,'Continuous','0.35mm'],
+      ['DECO',      'Furniture, drape, tables, chairs, and event deco elements',         30,'Continuous','0.25mm'],
+      ['SIGN',      'Signage, banners, graphics, and branding elements',                 3,'Continuous','0.18mm'],
+      ['SEATING',   'Audience seating blocks, GA floor zones, and pit areas',            9,'Continuous','0.18mm'],
+      ['EVENT-3RDP','Third-party vendor areas and independent contractor zones',          30,'DASHED',   '0.18mm'],
+      ['EVENT-ELEC','Event electrical orders — temporary power drops and distro',         3,'Continuous','0.18mm'],
+      ['ANNO-TEXT', 'Room labels, area names, and general annotation',                   3,'Continuous','0.18mm'],
+      ['ANNO-DIMS', 'Setup dimensions and production clearance callouts',                6,'Continuous','0.18mm'],
+      ['ANNO-ZONE', 'Zone labels, section designations, and area callouts',              3,'Continuous','0.18mm'],
+      ['ANNO-FIRE', 'Fire marshal annotations and code compliance callouts',             1,'Continuous','0.18mm'],
+      ['PAGE-LEGEND','Drawing legend, symbol key, and general notes block',              7,'Continuous','0.25mm'],
+      ['PAGE-NOPRINT','Non-printing layout guides, borders, and reference aids',         40,'Continuous','0.00mm'],
+      ['PAGE-VPRT', 'Viewport borders — do not plot',                                    9,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
   },
   General:{
     minimal:[
-      ['OBJ','Objects / Drawing',5,'Continuous','0.35mm'],
-      ['REF','Reference',8,'HIDDEN','0.18mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['OBJ',       'Primary drawing geometry and objects',                              5,'Continuous','0.35mm'],
+      ['REF',       'Reference geometry and construction lines — plot screened or off',  8,'HIDDEN',    '0.18mm'],
+      ['ANNO-DIMS', 'Dimension strings and leaders',                                     3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Text callouts, labels, and general notes',                          3,'Continuous','0.18mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     standard:[
-      ['OBJ','Objects — Primary',5,'Continuous','0.50mm'],
-      ['OBJ-SEC','Objects — Secondary',4,'Continuous','0.35mm'],
-      ['OBJ-LITE','Objects — Light',3,'Continuous','0.18mm'],
-      ['HATCH','Hatch / Fill',8,'Continuous','0.09mm'],
-      ['REF','Reference',8,'HIDDEN','0.18mm'],
-      ['DEMO','Demo / Removal',1,'DASHED','0.25mm'],
-      ['NEW','New Work',2,'Continuous','0.35mm'],
-      ['XREF','External References',9,'Continuous','0.00mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-SYMB','Symbols',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['OBJ',       'Primary drawing geometry — heaviest weight elements',               5,'Continuous','0.50mm'],
+      ['OBJ-SEC',   'Secondary geometry — supporting or contextual objects',             4,'Continuous','0.35mm'],
+      ['OBJ-LITE',  'Light geometry — outlines, fine detail, and secondary elements',   3,'Continuous','0.18mm'],
+      ['HATCH',     'Hatch patterns and section fill — plot screened',                   8,'Continuous','0.09mm'],
+      ['REF',       'Reference geometry and construction lines — plot screened or off',  8,'HIDDEN',    '0.18mm'],
+      ['DEMO',      'Objects or work to be demolished or removed',                       1,'DASHED',    '0.25mm'],
+      ['NEW',       'New work and proposed additions — current scope',                   2,'Continuous','0.35mm'],
+      ['XREF',      'External reference file attachments — do not plot',                 9,'Continuous','0.00mm'],
+      ['ANNO-DIMS', 'Dimension strings and leaders',                                     3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Text callouts, labels, and general notes',                          3,'Continuous','0.18mm'],
+      ['ANNO-SYMB', 'Symbols, callout tags, and graphical indicators',                   3,'Continuous','0.25mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
     full:[
-      ['OBJ','Objects — Heavy',5,'Continuous','0.50mm'],
-      ['OBJ-MED','Objects — Medium',4,'Continuous','0.35mm'],
-      ['OBJ-LITE','Objects — Light',3,'Continuous','0.25mm'],
-      ['OBJ-VTHIN','Objects — Very Light',8,'Continuous','0.18mm'],
-      ['HATCH','Hatch — Medium',8,'Continuous','0.09mm'],
-      ['HATCH-LT','Hatch — Light',9,'Continuous','0.09mm'],
-      ['REF','Reference',8,'HIDDEN','0.18mm'],
-      ['REF-GHOST','Ghost Reference',9,'Continuous','0.00mm'],
-      ['DEMO','Demo / Removal',1,'DASHED','0.35mm'],
-      ['NEW','New Work',2,'Continuous','0.35mm'],
-      ['EXIST','Existing to Remain',8,'Continuous','0.25mm'],
-      ['PROP','Proposed',3,'Continuous','0.35mm'],
-      ['XREF','External References',9,'Continuous','0.00mm'],
-      ['XREF-B','XREF Background',9,'Continuous','0.00mm'],
-      ['ANNO-DIMS','Dimensions',3,'Continuous','0.18mm'],
-      ['ANNO-NOTE','Notes & Text',3,'Continuous','0.18mm'],
-      ['ANNO-SYMB','Symbols',3,'Continuous','0.18mm'],
-      ['ANNO-LEGN','Legend',3,'Continuous','0.18mm'],
-      ['ANNO-TTLB','Title Block',7,'Continuous','0.35mm'],
-      ['ANNO-VPRT','Viewports',8,'Continuous','0.00mm'],
-      ['DEFPOINTS','Defpoints',8,'Continuous','0.00mm'],
+      ['OBJ',       'Primary drawing geometry — heaviest weight elements',               5,'Continuous','0.50mm'],
+      ['OBJ-MED',   'Medium weight geometry — secondary structural or enclosure elements',4,'Continuous','0.35mm'],
+      ['OBJ-LITE',  'Light geometry — outlines, fine detail, and secondary elements',   3,'Continuous','0.25mm'],
+      ['OBJ-VTHIN', 'Very light geometry — finish details and informational linework',   8,'Continuous','0.18mm'],
+      ['HATCH',     'Primary hatch patterns and section fill — plot screened',           8,'Continuous','0.09mm'],
+      ['HATCH-LT',  'Light background fill and secondary hatch — plot very screened',   9,'Continuous','0.09mm'],
+      ['REF',       'Reference geometry and construction lines — plot screened or off',  8,'HIDDEN',    '0.18mm'],
+      ['REF-GHOST', 'Ghost reference — underlying context, no plot',                     9,'Continuous','0.00mm'],
+      ['DEMO',      'Objects or work to be demolished or removed',                       1,'DASHED',    '0.35mm'],
+      ['NEW',       'New work and proposed additions — current scope',                   2,'Continuous','0.35mm'],
+      ['EXIST',     'Existing conditions to remain — verified and undisturbed',          8,'Continuous','0.25mm'],
+      ['PROP',      'Proposed future work — alternate scope or phased addition',         3,'Continuous','0.35mm'],
+      ['XREF',      'External reference file attachments — do not plot',                 9,'Continuous','0.00mm'],
+      ['XREF-B',    'Background XREF — context reference, do not plot',                  9,'Continuous','0.00mm'],
+      ['ANNO-DIMS', 'Dimension strings and leaders',                                     3,'Continuous','0.18mm'],
+      ['ANNO-NOTE', 'Text callouts, labels, and general notes',                          3,'Continuous','0.18mm'],
+      ['ANNO-SYMB', 'Symbols, callout tags, and graphical indicators',                   3,'Continuous','0.25mm'],
+      ['ANNO-LEGN', 'Drawing legend and material key',                                   3,'Continuous','0.18mm'],
+      ['ANNO-TTLB', 'Title block border, project data, and sheet info',                  7,'Continuous','0.35mm'],
+      ['ANNO-VPRT', 'Viewport borders — do not plot',                                    8,'Continuous','0.00mm'],
+      ['DEFPOINTS', 'Dimension definition points — do not plot',                         8,'Continuous','0.00mm'],
     ],
   }
 };
@@ -1312,165 +1412,181 @@ const PALETTES = [
   {
     id:'standard',
     name:'Standard',
-    desc:'Default discipline colors — classic CAD color assignments per layer role',
+    desc:'Classic discipline colors — the familiar CAD color assignments every drafter recognizes',
     colors:null
   },
   {
-    id:'modern',
-    name:'Modern',
-    desc:'Geometry in dark greys, systems in strong distinct hues, annotations in blue — no yellow or cyan',
-    // Uses only well-known seeded ACI values: 1-9, 30, 40, 140, 210, 220, 250-253
-    // ACI 250=#333(near-black) 251=#555 252=#777 253=#999 8=#414 9=#808
-    // ACI 1=red 2=yellow 3=green 4=cyan 5=blue 6=magenta 30=orange 140=purple 210=darkblue 220=darkgreen
+    id:'monochrome',
+    name:'Monochrome',
+    desc:'Greyscale — lineweight carries the hierarchy. Prints true in black and white. Fire and demo stay red.',
     colors:{
-      // Primary geometry — near-black, reads on both screen and print
-      'WALL':250,  'COLS':250,  'BEAM':250,  'FNDN':251,  'DECK':251,
-      'BLDG':250,  'PROP':250,  'ROW':251,
-      // Roads / civil geometry — dark grey step down
-      'ROAD':251,  'CURB':251,  'PVMT':252,  'WALK':252,
-      // MEP / systems — strong distinct hues (no yellow/cyan)
-      'DUCT':30,       // orange — HVAC
-      'MECH':30,
-      'PIPE-CW':5,     // blue — chilled water
-      'PIPE-HW':1,     // red — hot water
-      'PIPE':30,       // orange fallback for generic pipe
-      'ELEC':1,        // red — electrical
-      'POWR':1,
-      'PLMB':140,      // purple — plumbing
-      'UTIL-WATR':5,   // blue — water
-      'UTIL-SEWR':6,   // magenta — sewer
-      'UTIL-STRM':210, // dark blue — storm
-      'UTIL-ELEC':1,   // red — electrical ug
-      'UTIL-GAS':30,   // orange — gas
-      'UTIL-TELE':140, // purple — telecom
-      'RIGG':1,        // red — rigging (live events)
-      'LITE':30,       // orange — lighting
-      'AUDI':5,        // blue — audio
-      'VIDO':140,      // purple — video
-      // Structural specifics
-      'BRAC':30,       // orange — bracing
-      'JOIST':251,
-      'OPNG':9,        // grey — openings
-      // Site / landscape
-      'TOPO':220,      // dark green — contours
-      'LAND':220,
-      'ESMT':9,        // grey — easements
-      'SURV':8,        // dark — survey
-      // Annotation — clean blue
-      'ANNO':5,  'DIMS':5,  'NOTE':5,  'SYMB':5,  'TTLB':250,  'LEGN':5,  'KEYN':5,  'VPRT':9,
-      // Secondary / fill
-      'HATCH':253,  'PATT':253,  'FLOR-PATT':253,  'WALL-PATT':253,
-      // Demo / existing / reference
-      'DEMO':9,  'EXIST':252,  'REF':253,  'GHOST':253,  'XREF':253,
-      // Furniture / equipment — step lighter
-      'FURN':252,  'EQPM':252,  'SEATING':252,  'DECO':252,
-      // No-plot (use 9 = mid-grey — visible but clearly secondary)
-      'DEFPOINTS':9,  'XREF-B':9,
+      // Primary structure — near black
+      'WALL':250,  'COLS':250,  'BEAM':250,  'BLDG':250,  'PROP':250,
+      'ROW':250,   'BOOTH':250, 'BARR':250,  'STAGE':250,
+      // Medium structure
+      'DOOR':251,  'STRS':251,  'GLAZ':252,  'CLNG':252,  'ROOF':252,
+      'ROAD':251,  'RIGG':251,  'TRUSS':251, 'FNDN':251,  'DECK':252,
+      // Light geometry
+      'FLOR':253,  'FURN':253,  'EQPM':253,  'SITE':252,
+      'LAND':253,  'SEATING':253,'DECO':252,  'SIGN':253,  'BACKLINE':253,
+      // Systems — subtle grey differentiation
+      'DUCT':251,  'MECH':251,  'PIPE':252,  'ELEC':251,  'PLMB':252,
+      'UTIL':252,  'LITE':252,  'AUDIO':252, 'VIDEO':252, 'POWER':251,
+      'TOPO':252,  'ESMT':253,  'SURV':250,
+      // Hatch / fill
+      'PATT':254,  'HATCH':254,
+      // Annotations
+      'ANNO':8,    'DIMS':8,    'TEXT':8,    'NOTE':8,    'SYMB':8,
+      'TTLB':250,  'LEGN':8,    'KEYN':8,    'ZONE':8,    'FIRE-A':8,
+      // Safety / demo — only red items in the set
+      'DEMO':1,    'FIRE':1,    'PYRO':1,
+      // No-plot
+      'DEFPOINTS':9, 'VPRT':9, 'XREF':9, 'NOPRINT':9, 'GHOST':9,
       'DEFAULT':251
     }
   },
   {
-    id:'presentation',
-    name:'Presentation',
-    desc:'For client-facing and marketing output — strong black geometry, bold system colors, visible on white',
-    // Designed for printing on white paper or PDF export — no white/near-white colors
-    // ACI 250=near-black works as "the black line" for primary geometry
+    id:'blueprint',
+    name:'Blueprint',
+    desc:'Navy and cyan dominant — dark structure, luminous systems. Homage to the technical reproduction tradition.',
     colors:{
-      // All primary geometry — near-black (plots as a real black line)
-      'WALL':250,  'COLS':250,  'BEAM':250,  'FNDN':250,  'DECK':250,
-      'BLDG':250,  'PROP':250,  'ROW':250,
-      'DOOR':250,  'GLAZ':251,  'CLNG':251,  'STRS':250,  'ROOF':251,  'SITE':250,
-      'STGE':250,  'TENT':250,  'RIGG-TRUSS':250,
-      'ROAD':250,  'CURB':250,  'PVMT':251,  'WALK':251,
-      // MEP / systems — saturated, high contrast, distinct from each other
-      'DUCT':30,         // orange — HVAC
-      'MECH':30,
-      'PIPE-CW':5,       // blue — chilled water  
-      'PIPE-HW':1,       // red — hot water
-      'PIPE':30,
-      'ELEC':1,          // red — electrical
-      'POWR':1,
-      'PLMB':6,          // magenta — plumbing
-      'UTIL-WATR':5,     // blue
-      'UTIL-SEWR':6,     // magenta
-      'UTIL-STRM':4,     // cyan (ok in print context at full sat)
-      'UTIL-ELEC':1,     // red
-      'UTIL-GAS':30,     // orange
-      'RIGG':1,
-      'LITE':30,
-      'AUDI':5,
-      'VIDO':6,
-      // Structural
-      'BRAC':30,
-      'JOIST':251,
-      'OPNG':9,
-      // Site / landscape — greens
-      'TOPO':3,    'LAND':3,    'ESMT':9,    'SURV':250,
-      // Annotation — black for clarity in print
-      'ANNO':250,  'DIMS':250,  'NOTE':250,  'SYMB':250,  'TTLB':250,  'LEGN':250,  'KEYN':250,
-      // Viewport / no-plot — grey (still visible but clearly not primary)
-      'VPRT':9,
-      // Secondary
-      'HATCH':9,   'PATT':9,    'WALL-PATT':9,   'FLOR-PATT':9,
-      // Demo / reference
-      'DEMO':1,    'EXIST':9,   'REF':9,    'GHOST':253,  'XREF':253,
-      // Furniture / equipment
-      'FURN':251,  'EQPM':251,  'SEATING':251,  'DECO':9,
+      // Primary structure — dark navy
+      'WALL':210,  'COLS':210,  'BEAM':5,    'FNDN':210,  'DECK':5,
+      'BLDG':210,  'PROP':5,    'ROW':5,     'BOOTH':210, 'BARR':210,
+      'STAGE':5,   'RIGG':5,    'TRUSS':5,
+      // Secondary structure — blue
+      'DOOR':5,    'STRS':5,    'GLAZ':4,    'CLNG':4,    'ROOF':4,   'SITE':210,
+      'ROAD':210,
+      // Systems — cyan family
+      'DUCT':4,    'MECH':4,    'PIPE':5,    'ELEC':5,    'PLMB':4,
+      'LITE':4,    'AUDIO':5,   'VIDEO':210, 'POWER':5,   'UTIL':4,
+      // Landscape / site
+      'LAND':4,    'TOPO':4,    'ESMT':9,    'SURV':210,
+      // Light / tertiary
+      'FLOR':4,    'FURN':4,    'EQPM':4,    'SEATING':4, 'DECO':4,
+      'BACKLINE':9,'SIGN':4,
+      // Annotations — warm orange for contrast on blue field
+      'ANNO':30,   'DIMS':30,   'TEXT':30,   'NOTE':30,   'SYMB':30,
+      'TTLB':250,  'LEGN':30,   'ZONE':30,
+      // Hatch / fill
+      'PATT':254,  'HATCH':254,
+      // Safety / demo
+      'DEMO':1,    'FIRE':1,    'PYRO':1,
       // No-plot
-      'DEFPOINTS':9,  'XREF-B':9,
-      'DEFAULT':250
+      'DEFPOINTS':9, 'VPRT':9, 'XREF':9, 'NOPRINT':9,
+      'DEFAULT':5
     }
   },
   {
-    id:'duotone',
-    name:'Duotone',
-    desc:'Blue family for geometry + orange accent for active systems — clean, editorial, two-color discipline',
-    // Two-color concept: cool (blue family) + warm (orange/amber)
-    // Cool: ACI 5=blue, 210=darkblue, 4=cyan(light accent)
-    // Warm: ACI 30=orange, 40=olive-amber (secondary warm)
-    // Neutral: ACI 250=near-black, 251=dark-grey, 9=mid-grey
+    id:'warm',
+    name:'Warm',
+    desc:'Earth tones and warm ink — structured darks, ochre and orange accents. Reads like pencil on trace.',
     colors:{
-      // Primary geometry — dark blue (the "cool" anchor)
-      'WALL':210,  'COLS':210,  'BEAM':210,  'FNDN':5,   'DECK':210,
-      'BLDG':210,  'PROP':210,  'ROW':5,
-      'DOOR':210,  'GLAZ':5,    'CLNG':5,    'STRS':210,  'ROOF':5,    'SITE':210,
-      'STGE':210,  'TENT':210,  'RIGG-TRUSS':210,
-      'ROAD':210,  'CURB':210,  'PVMT':5,    'WALK':5,
-      // MEP / systems — warm orange (the "hot" accent)
-      'DUCT':30,   'MECH':30,
-      'PIPE-CW':5,   // stay cool — chilled water = blue makes sense
-      'PIPE-HW':30,  // warm — hot water = orange makes sense
-      'PIPE':30,
-      'ELEC':30,   'POWR':30,
-      'PLMB':5,    // blue — plumbing stays cool
-      'UTIL-WATR':5,   // blue
-      'UTIL-SEWR':30,  // orange/warm — sewer
-      'UTIL-STRM':210, // dark blue — storm
-      'UTIL-ELEC':30,  // orange — electrical
-      'UTIL-GAS':30,   // orange
-      'UTIL-TELE':5,   // blue
-      'RIGG':30,
-      'LITE':30,
-      'AUDI':5,
-      'VIDO':30,
-      // Structural
-      'BRAC':30,
-      'JOIST':210,
-      'OPNG':9,
-      // Site / landscape — use cool blue family
-      'TOPO':5,    'LAND':210,  'ESMT':9,   'SURV':210,
-      // Annotation — dark blue for legibility
-      'ANNO':210,  'DIMS':210,  'NOTE':210,  'SYMB':210,  'TTLB':250,  'LEGN':210,  'KEYN':210,
-      'VPRT':9,
-      // Secondary
-      'HATCH':9,  'PATT':9,   'WALL-PATT':9,  'FLOR-PATT':9,
-      // Demo / existing — warm (demo = orange, existing = grey)
-      'DEMO':30,  'EXIST':9,   'REF':9,   'GHOST':9,   'XREF':9,
-      // Furniture / equipment — cool
-      'FURN':5,  'EQPM':5,  'SEATING':9,  'DECO':30,
+      // Primary — warm near-black
+      'WALL':250,  'COLS':250,  'FNDN':51,   'DECK':51,   'BEAM':51,
+      'BLDG':250,  'PROP':51,   'ROW':51,    'BOOTH':250, 'STAGE':250,
+      // Secondary — warm brown/orange
+      'DOOR':30,   'GLAZ':30,   'CLNG':50,   'STRS':51,   'ROOF':52,  'SITE':51,
+      'ROAD':51,   'RIGG':30,   'TRUSS':30,  'BARR':51,
+      // Systems — warm ochre family
+      'DUCT':30,   'MECH':30,   'PIPE':50,   'ELEC':51,   'PLMB':30,
+      'LITE':30,   'AUDIO':50,  'VIDEO':51,  'POWER':30,  'UTIL':50,
+      // Landscape — forest green (only cool note)
+      'LAND':220,  'TOPO':220,  'ESMT':9,    'SURV':250,
+      // Light geometry
+      'FLOR':52,   'FURN':52,   'EQPM':52,   'SEATING':253,'DECO':30,
+      'BACKLINE':52,'SIGN':50,
+      // Annotations — dark warm grey
+      'ANNO':8,    'DIMS':8,    'TEXT':8,    'NOTE':8,    'SYMB':8,
+      'TTLB':250,  'LEGN':8,    'ZONE':8,
+      // Hatch / fill
+      'PATT':253,  'HATCH':253,
+      // Safety / demo
+      'DEMO':1,    'FIRE':1,    'PYRO':1,
       // No-plot
-      'DEFPOINTS':9,  'XREF-B':9,
-      'DEFAULT':210
+      'DEFPOINTS':9, 'VPRT':9, 'XREF':9,
+      'DEFAULT':30
+    }
+  },
+  {
+    id:'vivid',
+    name:'Vivid',
+    desc:'One strong hue per discipline — zero ambiguity. Signal-quality color logic that reads across the room.',
+    colors:{
+      // Structure — near black (neutral anchor, never competes with systems)
+      'WALL':250,  'COLS':250,  'BEAM':250,  'FNDN':251,  'DECK':252,
+      'BLDG':250,  'PROP':250,  'ROW':250,   'BOOTH':250, 'STAGE':250, 'BARR':251,
+      'DOOR':251,  'GLAZ':252,  'STRS':251,  'CLNG':252,  'ROOF':252,  'SITE':210,
+      'ROAD':210,  'CURB':210,
+      // HVAC — orange
+      'DUCT':30,   'MECH':30,
+      // Plumbing + water — cyan
+      'PIPE':4,    'PLMB':4,    'UTIL-WATR':4, 'UTIL-STRM':5,
+      // Sanitary — contrasting to water
+      'UTIL-SEWR':6,
+      // Electrical — green
+      'ELEC':3,    'UTIL-ELEC':3,
+      // Gas — red-orange (distinct, hazard association)
+      'UTIL-GAS':1,
+      // Telecom — purple
+      'UTIL-TELE':140,
+      // Live events production — discipline-distinct
+      'RIGG':1,    'TRUSS':30,  'LITE':2,    'AUDIO':5,
+      'VIDEO':140, 'POWER':6,   'PYRO':1,
+      // Landscape — forest green
+      'LAND':220,  'TOPO':220,  'SURV':250,  'ESMT':9,
+      // Secondary elements
+      'FURN':252,  'EQPM':252,  'SEATING':252,'DECO':6,   'BACKLINE':9, 'SIGN':3,
+      // Annotations — dark grey (never competes)
+      'ANNO':8,    'DIMS':8,    'TEXT':8,    'NOTE':8,    'SYMB':8,
+      'TTLB':250,  'LEGN':8,    'ZONE':8,
+      // Hatch / fill
+      'PATT':253,  'HATCH':253,
+      // Safety / demo
+      'DEMO':1,    'FIRE':1,
+      // No-plot
+      'DEFPOINTS':9, 'VPRT':9, 'XREF':9,
+      'DEFAULT':8
+    }
+  },
+  {
+    id:'editorial',
+    name:'Editorial',
+    desc:'Muted sophistication — considered mid-tones for documents that need to look calibrated, not loud.',
+    colors:{
+      // Primary structure — slate blue
+      'WALL':210,  'COLS':210,  'BEAM':210,  'FNDN':251,  'DECK':252,
+      'BLDG':210,  'PROP':210,  'ROW':210,   'BOOTH':210, 'STAGE':210, 'BARR':251,
+      'DOOR':210,  'GLAZ':210,  'STRS':210,  'CLNG':251,  'ROOF':252,  'SITE':210,
+      'ROAD':251,  'RIGG':210,  'TRUSS':210, 'BACKLINE':252,
+      // HVAC — muted ochre
+      'DUCT':50,   'MECH':50,
+      // Plumbing + water — forest green
+      'PIPE':220,  'PLMB':220,  'UTIL-WATR':220, 'UTIL-STRM':210,
+      // Sanitary — warm brown
+      'UTIL-SEWR':50,
+      // Electrical — muted purple
+      'ELEC':140,  'POWER':140, 'UTIL-ELEC':140,
+      // Gas — ochre
+      'UTIL-GAS':50,
+      // Telecom — light purple
+      'UTIL-TELE':150,
+      // Live events — subdued
+      'LITE':50,   'AUDIO':220, 'VIDEO':140,
+      // Landscape
+      'LAND':220,  'TOPO':220,  'ESMT':252,  'SURV':210,
+      // Secondary elements
+      'FURN':252,  'EQPM':252,  'SEATING':253,'DECO':50,  'SIGN':220,
+      // Annotations — dark grey
+      'ANNO':8,    'DIMS':8,    'TEXT':8,    'NOTE':8,    'SYMB':8,
+      'TTLB':250,  'LEGN':8,    'ZONE':8,    'KEYN':8,
+      // Hatch / fill
+      'PATT':254,  'HATCH':253,
+      // Safety / demo — red stays red everywhere
+      'DEMO':1,    'FIRE':1,    'PYRO':1,
+      // No-plot
+      'DEFPOINTS':9, 'VPRT':9, 'XREF':9, 'NOPRINT':253,
+      'DEFAULT':251
     }
   }
 ];
@@ -1515,6 +1631,12 @@ let textStyles=[
   {name:'TAG',   font:'Arial.ttf', height:0, width:0.70, oblique:0},
 ];
 
+// Dim styles — null fields = auto-calculated from scale/units
+let dimStyles=[
+  {name:'STD-DIM', arrow:'tick', metricDim:false,
+   txtH:null, arrowSz:null, extExt:null, extOff:null, dimGap:null}
+];
+
 function g(id){return document.getElementById(id)}
 function getState(){
   return {
@@ -1525,9 +1647,7 @@ function getState(){
     sf:parseFloat(g('sel-scale').value)||48,
     scaleLabel:g('sel-scale').options[g('sel-scale').selectedIndex]?.text||'',
     size:g('sel-size').value,
-    dimName:g('txt-dim').value.trim()||'STD-DIM',
-    arrowStyle:g('sel-arrow').value,
-    metricDim:g('chk-metric-dim').checked,
+    caseStyle:g('sel-case').value,
     ltHidden:g('lt-hidden').checked,
     ltDashed:g('lt-dashed').checked,
     ltCenter:g('lt-center').checked,
@@ -1544,10 +1664,18 @@ function getPrefix(ind,std,pfx){
   return (m[ind]||{})[std]||'G';
 }
 
-function buildLayerName(pfx,sfx,std){
-  if(!pfx) return sfx;
-  const sep=std==='ANSI'?'_':'-';
-  return pfx+sep+sfx;
+function buildLayerName(pfx, sfx, std, cs){
+  cs = cs || 'UPPER-DASH';
+  const delim = (cs.includes('_Under') || cs.includes('_UNDER') || cs === 'lower_under' || cs === 'UPPER_UNDER') ? '_' : '-';
+  function ct(token){
+    if(cs.startsWith('UPPER')) return token.toUpperCase();
+    if(cs.startsWith('Title')) return token.charAt(0).toUpperCase() + token.slice(1).toLowerCase();
+    return token.toLowerCase();
+  }
+  const parts = [];
+  if(pfx) parts.push(...pfx.split(/[-_]/));
+  parts.push(...sfx.split(/[-_]/));
+  return parts.map(ct).join(delim);
 }
 
 function san(n){return n.replace(/[^A-Za-z0-9_\-]/g,'_').substring(0,31);}
@@ -1563,7 +1691,7 @@ function getLayers(state){
     const [suffix,desc,baseColor,lt,lw]=r;
     const ov=layerOverrides[i]||{};
     return {
-      name:   ov.name  !== undefined ? ov.name  : san(buildLayerName(pfx,suffix,state.standard)),
+      name:   ov.name  !== undefined ? ov.name  : san(buildLayerName(pfx,suffix,state.standard,state.caseStyle)),
       suffix, desc,
       color:  ov.color !== undefined ? ov.color : applyPalette(activePalette, suffix, baseColor),
       lt:     ov.lt    !== undefined ? ov.lt    : lt,
@@ -1583,19 +1711,23 @@ function getSelectedLTs(state){
   return r;
 }
 
-function calcDimVars(state){
+function calcDimVars(state, ds){
   const sf=state.sf;
-  const isMetric=state.units.startsWith('metric');
-  const arch=state.units==='arch';
+  const useMetric=state.units.startsWith('metric')||(ds&&ds.metricDim);
+  const arch=state.units==='arch'&&!(ds&&ds.metricDim);
   let txtH,arrowSz,extExt,extOff,dimGap;
-  if(isMetric||state.metricDim){txtH=2.5;arrowSz=2.5;extExt=2;extOff=2;dimGap=1;}
+  if(useMetric){txtH=2.5;arrowSz=2.5;extExt=2;extOff=2;dimGap=1;}
   else if(arch){txtH=0.09375;arrowSz=0.09375;extExt=0.0625;extOff=0.0625;dimGap=0.0625;}
   else{txtH=0.125;arrowSz=0.125;extExt=0.0625;extOff=0.0625;dimGap=0.0625;}
-  const luType=(arch&&!state.metricDim)?5:2;
-  const dimdec=(arch&&!state.metricDim)?0:2;
+  const luType=arch?5:2;
+  const dimdec=arch?0:2;
   const dimfrac=0;
-  const arrBlk={tick:'_Oblique',closed:'_ClosedFilled',dot:'_Dot',open:'_Open'}[state.arrowStyle];
-  return{sf,txtH,arrowSz,extExt,extOff,dimGap,luType,dimdec,dimfrac,arrBlk};
+  const arrow=(ds&&ds.arrow)||'tick';
+  const arrBlk={tick:'_Oblique',closed:'_ClosedFilled',dot:'_Dot',open:'_Open'}[arrow];
+  // Per-style overrides: empty string or null = keep auto value
+  function ov(val){ const n=parseFloat(val); return(!isNaN(n)&&val!==null&&val!=='')?n:null; }
+  if(ds){ if(ov(ds.txtH)!==null)txtH=ov(ds.txtH); if(ov(ds.arrowSz)!==null)arrowSz=ov(ds.arrowSz); if(ov(ds.extExt)!==null)extExt=ov(ds.extExt); if(ov(ds.extOff)!==null)extOff=ov(ds.extOff); if(ov(ds.dimGap)!==null)dimGap=ov(ds.dimGap); }
+  return{sf,txtH,arrowSz,extExt,extOff,dimGap,luType,dimdec,dimfrac,arrBlk,useMetric,arch,arrow};
 }
 
 function resetOverrides(){layerOverrides={};customLayers=null;refresh();}
@@ -1845,10 +1977,8 @@ function addSingleLayer(){
 // ═══════════════════════════════════════════════════════
 function renderStyles(){
   const state=getState();
-  const dv=calcDimVars(state);
-  const isMetric=state.units.startsWith('metric')||state.metricDim;
-  const arch=state.units==='arch'&&!state.metricDim;
-  const fontOpts=FONT_OPTIONS.map(f=>`<option value="${f.file}">${f.label}</option>`).join('');
+  const isMetric=state.units.startsWith('metric');
+  const arch=state.units==='arch';
 
   let html='<div class="styles-section-head">Text Styles <span style="font-size:10px;color:var(--text3);font-weight:400">('+textStyles.length+' defined)</span></div>';
 
@@ -1885,21 +2015,66 @@ function renderStyles(){
 
   html+=`<button class="add-style-btn" onclick="addStyle()">+ Add Text Style</button>`;
 
-  html+=`<div class="styles-section-head" style="margin-top:4px">${state.dimName} — Dimension Style</div>`;
-  html+=`<div class="dcard"><div class="dv-grid">
-    <div class="sprop"><span class="k">DIMSCALE</span><span class="v">${dv.sf}</span></div>
-    <div class="sprop"><span class="k">LTSCALE</span><span class="v">${dv.sf}</span></div>
-    <div class="sprop"><span class="k">DIMTXT</span><span class="v">${dv.txtH}</span></div>
-    <div class="sprop"><span class="k">DIMASZ</span><span class="v">${dv.arrowSz}</span></div>
-    <div class="sprop"><span class="k">DIMEXE</span><span class="v">${dv.extExt}</span></div>
-    <div class="sprop"><span class="k">DIMEXO</span><span class="v">${dv.extOff}</span></div>
-    <div class="sprop"><span class="k">DIMGAP</span><span class="v">${dv.dimGap}</span></div>
-    <div class="sprop"><span class="k">DIMLUNIT</span><span class="v">${dv.luType} (${arch?'Arch':isMetric?'Decimal':'Decimal'})</span></div>
-    <div class="sprop"><span class="k">DIMDEC</span><span class="v">${dv.dimdec}</span></div>
-    <div class="sprop"><span class="k">Arrow</span><span class="v">${state.arrowStyle}</span></div>
-    <div class="sprop"><span class="k">DIMTXSTY</span><span class="v">${textStyles[0]?textStyles[0].name:'LABEL'}</span></div>
-    <div class="sprop"><span class="k">Plotted Ht</span><span class="v">${isMetric?dv.txtH+'mm':arch?(Math.round(dv.txtH*32)/32).toFixed(4)+'"':dv.txtH+'"'}</span></div>
-  </div></div>`;
+  // ── Dim Styles ──
+  html+=`<div class="styles-section-head" style="margin-top:4px">Dimension Styles <span style="font-size:10px;color:var(--text3);font-weight:400">(${dimStyles.length} defined)</span></div>`;
+
+  dimStyles.forEach((ds,i)=>{
+    const dv=calcDimVars(state,ds);
+    const r=n=>Number.isInteger(parseFloat(n))?parseFloat(n).toFixed(1):String(parseFloat(n));
+    const arrowOpts=['tick','closed','dot','open'].map(a=>`<option value="${a}"${ds.arrow===a?' selected':''}>${{tick:'Arch Tick',closed:'Closed Filled',dot:'Dot',open:'Open Arrow'}[a]}</option>`).join('');
+    const ph=(auto)=>`placeholder="auto: ${auto}"`;
+    html+=`<div class="dcard">
+      <h3 style="display:flex;align-items:center;justify-content:space-between">
+        <span>Dim Style ${i+1}: ${ds.name}</span>
+        ${dimStyles.length>1?`<button class="del-style" onclick="deleteDimStyle(${i})" title="Remove dim style" style="position:static;margin-left:8px">✕</button>`:''}
+      </h3>
+      <div class="r3" style="gap:8px;margin-bottom:10px">
+        <div class="field"><label class="lbl">Style Name</label>
+          <input type="text" value="${ds.name}" oninput="updateDimStyle(${i},'name',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">Arrow Type</label>
+          <select onchange="updateDimStyle(${i},'arrow',this.value)" style="background:rgba(255,255,255,.9)">${arrowOpts}</select>
+        </div>
+        <div class="field"><label class="lbl" style="display:flex;align-items:center;gap:5px">
+          <input type="checkbox" ${ds.metricDim?'checked':''} onchange="updateDimStyle(${i},'metricDim',this.checked)" style="width:auto;margin:0">
+          Force metric format
+        </label></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:6px">Override dim variables <span style="font-weight:400;letter-spacing:0">(leave blank to auto-calculate from scale)</span></div>
+      <div class="dv-grid">
+        <div class="field"><label class="lbl">DIMTXT</label>
+          <input type="number" value="${ds.txtH??''}" step="0.01" ${ph(r(dv.txtH))} oninput="updateDimStyle(${i},'txtH',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">DIMASZ (arrow size)</label>
+          <input type="number" value="${ds.arrowSz??''}" step="0.01" ${ph(r(dv.arrowSz))} oninput="updateDimStyle(${i},'arrowSz',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">DIMEXE (ext line ext)</label>
+          <input type="number" value="${ds.extExt??''}" step="0.01" ${ph(r(dv.extExt))} oninput="updateDimStyle(${i},'extExt',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">DIMEXO (ext line offset)</label>
+          <input type="number" value="${ds.extOff??''}" step="0.01" ${ph(r(dv.extOff))} oninput="updateDimStyle(${i},'extOff',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+        <div class="field"><label class="lbl">DIMGAP (text gap)</label>
+          <input type="number" value="${ds.dimGap??''}" step="0.01" ${ph(r(dv.dimGap))} oninput="updateDimStyle(${i},'dimGap',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
+      </div>
+      <div class="sprv" style="margin-top:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
+          <div class="sprop"><span class="k">DIMSCALE</span><span class="v">${r(dv.sf)}</span></div>
+          <div class="sprop"><span class="k">DIMTXT</span><span class="v">${r(dv.txtH)}</span></div>
+          <div class="sprop"><span class="k">DIMASZ</span><span class="v">${r(dv.arrowSz)}</span></div>
+          <div class="sprop"><span class="k">DIMEXE</span><span class="v">${r(dv.extExt)}</span></div>
+          <div class="sprop"><span class="k">DIMEXO</span><span class="v">${r(dv.extOff)}</span></div>
+          <div class="sprop"><span class="k">DIMGAP</span><span class="v">${r(dv.dimGap)}</span></div>
+          <div class="sprop"><span class="k">DIMLUNIT</span><span class="v">${dv.luType} (${dv.arch?'Arch':dv.useMetric?'Metric':'Decimal'})</span></div>
+          <div class="sprop"><span class="k">Arrow</span><span class="v">${dv.arrow}</span></div>
+          <div class="sprop"><span class="k">DIMTXSTY</span><span class="v">${textStyles[0]?textStyles[0].name:'LABEL'}</span></div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html+=`<button class="add-style-btn" onclick="addDimStyle()">+ Add Dimension Style</button>`;
 
   const wrap=g('styles-scroll');
   if(wrap) wrap.innerHTML=html;
@@ -1918,6 +2093,20 @@ function deleteStyle(i){
   textStyles.splice(i,1);
   renderStyles();
 }
+function updateDimStyle(i,key,val){
+  if(i<dimStyles.length) dimStyles[i][key]=val;
+  renderStyles();
+}
+function addDimStyle(){
+  dimStyles.push({name:'DIM-'+(dimStyles.length+1),arrow:'tick',metricDim:false,
+    txtH:null,arrowSz:null,extExt:null,extOff:null,dimGap:null});
+  renderStyles();
+}
+function deleteDimStyle(i){
+  if(dimStyles.length<=1){alert('At least one dimension style required.');return;}
+  dimStyles.splice(i,1);
+  renderStyles();
+}
 
 // ═══════════════════════════════════════════════════════
 // LISP GENERATOR
@@ -1928,7 +2117,6 @@ function generateLispText(){
   const state=getState();
   const layers=getLayers(state);
   const lts=getSelectedLTs(state);
-  const dv=calcDimVars(state);
   function q(v){return '"'+v+'"';}
   function r(n){const f=parseFloat(n);return Number.isInteger(f)?f.toFixed(1):String(f);}
 
@@ -2022,30 +2210,36 @@ function generateLispText(){
     L.push('  (su:def-layer '+q(l.name)+' '+l.color+' '+q(lt)+' '+lw+' '+plot+')');
   });
   L.push('');
-  L.push('  ;; Dimension variables');
-  L.push('  (setvar "DIMSCALE" '+r(dv.sf)+')');
-  L.push('  (setvar "DIMTXT"   '+r(dv.txtH)+')');
-  L.push('  (setvar "DIMASZ"   '+r(dv.arrowSz)+')');
-  L.push('  (setvar "DIMEXE"   '+r(dv.extExt)+')');
-  L.push('  (setvar "DIMEXO"   '+r(dv.extOff)+')');
-  L.push('  (setvar "DIMGAP"   '+r(dv.dimGap)+')');
-  L.push('  (setvar "DIMLUNIT" '+parseInt(dv.luType)+')');
-  L.push('  (setvar "DIMDEC"   '+parseInt(dv.dimdec)+')');
-  L.push('  (setvar "DIMFRAC"  '+parseInt(dv.dimfrac)+')');
-  L.push('  (setvar "DIMTXSTY" '+q(textStyles[0]?textStyles[0].name:'LABEL')+')');
-  L.push('  (setvar "DIMCLRD"  256)');
-  L.push('  (setvar "DIMCLRE"  256)');
-  L.push('  (setvar "DIMCLRT"  256)');
-  L.push('  (setvar "DIMSAH"   0)');
-  if(state.arrowStyle==='tick'){
-    L.push('  (setvar "DIMTSZ"   '+r(dv.arrowSz)+')');
-  } else {
-    L.push('  (setvar "DIMTSZ"   0.0)');
-    L.push('  (setvar "DIMBLK"   '+q(dv.arrBlk)+')');
-  }
-  L.push('');
-  L.push('  (command "_.-DIMSTYLE" "_S" '+q(state.dimName)+' "")');
-  L.push('');
+  L.push('  ;; Dimension styles ('+dimStyles.length+')');
+  dimStyles.forEach((ds,di)=>{
+    const dv=calcDimVars(state,ds);
+    L.push('  ;; '+ds.name);
+    if(di===0){
+      L.push('  (setvar "DIMSCALE" '+r(dv.sf)+')');
+      L.push('  (setvar "LTSCALE"  '+r(dv.sf)+')');
+    }
+    L.push('  (setvar "DIMTXT"   '+r(dv.txtH)+')');
+    L.push('  (setvar "DIMASZ"   '+r(dv.arrowSz)+')');
+    L.push('  (setvar "DIMEXE"   '+r(dv.extExt)+')');
+    L.push('  (setvar "DIMEXO"   '+r(dv.extOff)+')');
+    L.push('  (setvar "DIMGAP"   '+r(dv.dimGap)+')');
+    L.push('  (setvar "DIMLUNIT" '+parseInt(dv.luType)+')');
+    L.push('  (setvar "DIMDEC"   '+parseInt(dv.dimdec)+')');
+    L.push('  (setvar "DIMFRAC"  '+parseInt(dv.dimfrac)+')');
+    L.push('  (setvar "DIMTXSTY" '+q(textStyles[0]?textStyles[0].name:'LABEL')+')');
+    L.push('  (setvar "DIMCLRD"  256)');
+    L.push('  (setvar "DIMCLRE"  256)');
+    L.push('  (setvar "DIMCLRT"  256)');
+    L.push('  (setvar "DIMSAH"   0)');
+    if(dv.arrow==='tick'){
+      L.push('  (setvar "DIMTSZ"   '+r(dv.arrowSz)+')');
+    } else {
+      L.push('  (setvar "DIMTSZ"   0.0)');
+      L.push('  (setvar "DIMBLK"   '+q(dv.arrBlk)+')');
+    }
+    L.push('  (command "_.-DIMSTYLE" "_S" '+q(ds.name)+' "")');
+    L.push('');
+  });
   if(state.inclZoom) L.push('  (command "_.ZOOM" "_E")');
   L.push('');
   L.push('  (setvar "CMDECHO" 1)');
@@ -2066,13 +2260,14 @@ function generateScrText(){
   const state=getState();
   const layers=getLayers(state);
   const lts=getSelectedLTs(state);
-  const dv=calcDimVars(state);
   const sv=(n,v)=>`${n}\n${v}\n`;
-  const lp=(...t)=>t.join(' ')+' \n';   // looping commands (-LAYER, -LINETYPE, -DIMSTYLE)
-  const ln=(...t)=>t.join(' ')+'\n';    // single-pass commands (-STYLE, ZOOM, sysvars by value)
+  const lp=(...t)=>t.join(' ')+' \n';
+  const ln=(...t)=>t.join(' ')+'\n';
   let s='';
   if(state.inclUnits) s+=sv('INSUNITS',UNITS_INSUNITS[state.units]);
-  s+=sv('LTSCALE',dv.sf);
+  // LTSCALE from first dim style
+  const dv0=calcDimVars(state,dimStyles[0]);
+  s+=sv('LTSCALE',dv0.sf);
   lts.forEach(lt=>s+=lp('-LINETYPE','L',lt,'ACAD.LIN'));
   textStyles.forEach(ts=>{
     s+=ln('-STYLE',ts.name,ts.font,String(ts.height),String(ts.width),String(ts.oblique),'N','N');
@@ -2082,14 +2277,18 @@ function generateScrText(){
   layers.filter(l=>l.lt!=='Continuous').forEach(l=>s+=lp('-LAYER','LT',l.lt,l.name));
   layers.forEach(l=>s+=lp('-LAYER','LW',l.lw.replace('mm',''),l.name));
   layers.filter(l=>NO_PLOT_SUFFIXES.includes(l.suffix)).forEach(l=>s+=lp('-LAYER','P','N',l.name));
-  s+=sv('DIMSCALE',dv.sf); s+=sv('DIMTXT',dv.txtH); s+=sv('DIMASZ',dv.arrowSz);
-  s+=sv('DIMEXE',dv.extExt); s+=sv('DIMEXO',dv.extOff); s+=sv('DIMGAP',dv.dimGap);
-  s+=sv('DIMLUNIT',dv.luType); s+=sv('DIMDEC',dv.dimdec); s+=sv('DIMFRAC',dv.dimfrac);
-  s+=sv('DIMTXSTY',textStyles[0]?textStyles[0].name:'LABEL');
-  s+=sv('DIMCLRD','256'); s+=sv('DIMCLRE','256'); s+=sv('DIMCLRT','256'); s+=sv('DIMSAH','0');
-  if(state.arrowStyle==='tick') s+=sv('DIMTSZ',dv.arrowSz);
-  else{s+=sv('DIMTSZ','0');s+=sv('DIMBLK',dv.arrBlk);}
-  s+=lp('-DIMSTYLE','S',state.dimName);
+  dimStyles.forEach((ds,di)=>{
+    const dv=calcDimVars(state,ds);
+    if(di===0) s+=sv('DIMSCALE',dv.sf);
+    s+=sv('DIMTXT',dv.txtH); s+=sv('DIMASZ',dv.arrowSz);
+    s+=sv('DIMEXE',dv.extExt); s+=sv('DIMEXO',dv.extOff); s+=sv('DIMGAP',dv.dimGap);
+    s+=sv('DIMLUNIT',dv.luType); s+=sv('DIMDEC',dv.dimdec); s+=sv('DIMFRAC',dv.dimfrac);
+    s+=sv('DIMTXSTY',textStyles[0]?textStyles[0].name:'LABEL');
+    s+=sv('DIMCLRD','256'); s+=sv('DIMCLRE','256'); s+=sv('DIMCLRT','256'); s+=sv('DIMSAH','0');
+    if(dv.arrow==='tick') s+=sv('DIMTSZ',dv.arrowSz);
+    else{s+=sv('DIMTSZ','0');s+=sv('DIMBLK',dv.arrBlk);}
+    s+=lp('-DIMSTYLE','S',ds.name);
+  });
   if(state.inclZoom) s+=ln('ZOOM','E');
   s+='\n';
   return{s,layers,lts};
@@ -2105,8 +2304,8 @@ function generateAll(){
 
   g('lisp-out').textContent=lsp;
   g('scr-out').textContent=scr;
-  g('lisp-info').textContent=`${layers.length} layers · ${lts.length} linetypes · ${textStyles.length} styles · 1 dim style`;
-  g('scr-info').textContent=`${layers.length} layers · ${lts.length} linetypes · ${textStyles.length} styles · ${scr.split('\n').length} lines`;
+  g('lisp-info').textContent=`${layers.length} layers · ${lts.length} linetypes · ${textStyles.length} text styles · ${dimStyles.length} dim styles`;
+  g('scr-info').textContent=`${layers.length} layers · ${lts.length} linetypes · ${textStyles.length} text styles · ${dimStyles.length} dim styles · ${scr.split('\n').length} lines`;
 
   renderLayerTable();
   renderStyles();
@@ -2186,9 +2385,7 @@ function savePreset(){
       units:state.units,
       sf:state.sf,
       size:state.size,
-      dimName:state.dimName,
-      arrowStyle:state.arrowStyle,
-      metricDim:state.metricDim,
+      caseStyle:state.caseStyle,
       ltHidden:state.ltHidden,ltDashed:state.ltDashed,
       ltCenter:state.ltCenter,ltPhantom:state.ltPhantom,ltDot:state.ltDot,
       inclUnits:state.inclUnits,inclZoom:state.inclZoom,
@@ -2196,6 +2393,7 @@ function savePreset(){
     },
     palette:activePalette,
     textStyles:JSON.parse(JSON.stringify(textStyles)),
+    dimStyles:JSON.parse(JSON.stringify(dimStyles)),
     layerOverrides:JSON.parse(JSON.stringify(layerOverrides)),
     customLayers:customLayers?JSON.parse(JSON.stringify(customLayers)):null,
   };
@@ -2216,9 +2414,7 @@ function loadPreset(id){
   if(s.industry) g('sel-industry').value=s.industry;
   if(s.units){g('sel-units').value=s.units;updateScales();}
   if(s.size) g('sel-size').value=s.size;
-  if(s.dimName) g('txt-dim').value=s.dimName;
-  if(s.arrowStyle) g('sel-arrow').value=s.arrowStyle;
-  if(typeof s.metricDim==='boolean') g('chk-metric-dim').checked=s.metricDim;
+  if(s.caseStyle) g('sel-case').value=s.caseStyle;
   if(typeof s.ltHidden==='boolean') g('lt-hidden').checked=s.ltHidden;
   if(typeof s.ltDashed==='boolean') g('lt-dashed').checked=s.ltDashed;
   if(typeof s.ltCenter==='boolean') g('lt-center').checked=s.ltCenter;
@@ -2235,6 +2431,7 @@ function loadPreset(id){
     if(palObj) g('pal-desc').textContent=palObj.desc;
   }
   if(p.textStyles) textStyles=JSON.parse(JSON.stringify(p.textStyles));
+  if(p.dimStyles)  dimStyles=JSON.parse(JSON.stringify(p.dimStyles));
   if(p.layerOverrides) layerOverrides=JSON.parse(JSON.stringify(p.layerOverrides));
   customLayers=p.customLayers?JSON.parse(JSON.stringify(p.customLayers)):null;
   refresh();
@@ -2250,14 +2447,14 @@ function renderPresetList(){
   const list=getPresets();
   const wrap=g('preset-list');
   if(!list.length){
-    wrap.innerHTML='<p style="font-family:var(--mono);font-size:11px;color:#8a9ab0;text-align:center;padding:16px">No presets saved yet</p>';
+    wrap.innerHTML='<p style="font-family:var(--mono);font-size:11px;color:#3a4a5c;text-align:center;padding:16px">No presets saved yet</p>';
     return;
   }
   wrap.innerHTML=list.map(p=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">
       <div style="flex:1">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:#1a2332">${p.name}</div>
-        <div style="font-family:var(--mono);font-size:10px;color:#8a9ab0">${p.state.industry} · ${p.state.standard} · ${p.created}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:#3a4a5c">${p.state.industry} · ${p.state.standard} · ${p.created}</div>
       </div>
       <button class="tbtn" onclick="loadPreset(${p.id})" style="padding:4px 10px;font-size:10px">Load</button>
       <button class="tbtn" onclick="deletePreset(${p.id})" style="padding:4px 8px;font-size:10px;border-color:#e53935;color:#c62828">✕</button>
@@ -2304,7 +2501,7 @@ refresh();
   <div style="background:#fff;border-radius:12px;padding:24px;width:480px;max-width:94vw;box-shadow:0 16px 48px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:14px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h3 style="font-family:var(--mono);font-size:13px;color:#1a2332;letter-spacing:.5px">PRESETS</h3>
-      <button onclick="closePresets()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8a9ab0;padding:2px 6px;border-radius:4px">✕</button>
+      <button onclick="closePresets()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#3a4a5c;padding:2px 6px;border-radius:4px">✕</button>
     </div>
     <div style="display:flex;gap:8px">
       <input type="text" id="preset-name" placeholder="Preset name..." style="flex:1">
@@ -2317,7 +2514,7 @@ refresh();
         Import JSON <input type="file" accept=".json" onchange="importPresets(event)" style="display:none">
       </label>
     </div>
-    <p style="font-size:10px;color:#8a9ab0;font-family:var(--mono);text-align:center">Presets stored in browser localStorage · Export to share with team</p>
+    <p style="font-size:10px;color:#3a4a5c;font-family:var(--mono);text-align:center">Presets stored in browser localStorage · Export to share with team</p>
   </div>
 </div>
 
