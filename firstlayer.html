@@ -2248,12 +2248,12 @@ function generateLispText(){
   if(state.inclZoom) L.push('  (command "_.ZOOM" "_E")');
   L.push('');
   L.push('  (setvar "CMDECHO" 1)');
-  L.push('  (princ (strcat "\\\\nSetup complete: "+layers.length+" layers."));');
+  L.push('  (princ (strcat "\\nSetup complete: '+layers.length+' layers."))');
   L.push('  (princ)');
   L.push(')');
   L.push('');
-  L.push(';; Load this file via APPLOAD, then type SETMEUP at the command prompt.');
-  L.push('');
+  L.push('(princ "\\nFirstLayer loaded — type SETMEUP to run.")');
+  L.push('(princ)');
 
   return{s:L.join('\n'),layers,lts};
 }

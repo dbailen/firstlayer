@@ -2252,9 +2252,7 @@ function generateLispText(){
   L.push('  (princ)');
   L.push(')');
   L.push('');
-  L.push(';; Auto-run on load — type SETMEUP to run again at any time.');
-  L.push('(princ "\\n  FirstLayer loaded — running SETMEUP...")');
-  L.push('(c:SETMEUP)');
+  L.push('(princ "\\nFirstLayer loaded — type SETMEUP to run.")');
   L.push('(princ)');
 
   return{s:L.join('\n'),layers,lts};
