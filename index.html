@@ -16,7 +16,7 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
 /* ============================================
-   THEME VARIABLE — matching App.css language
+   THEME VARIABLES — matching App.css language
    ============================================ */
 :root {
   --bg-gradient-start: #e8f0f9;
@@ -2248,12 +2248,14 @@ function generateLispText(){
   if(state.inclZoom) L.push('  (command "_.ZOOM" "_E")');
   L.push('');
   L.push('  (setvar "CMDECHO" 1)');
-  L.push('  (princ (strcat "\\\\nSetup complete: "+layers.length+" layers."));');
+  L.push('  (princ (strcat "\\nSetup complete: '+layers.length+' layers."))');
   L.push('  (princ)');
   L.push(')');
   L.push('');
-  L.push(';; Load this file via APPLOAD, then type SETMEUP at the command prompt.');
-  L.push('');
+  L.push(';; Auto-run on load — type SETMEUP to run again at any time.');
+  L.push('(princ "\\n  FirstLayer loaded — running SETMEUP...")');
+  L.push('(c:SETMEUP)');
+  L.push('(princ)');
 
   return{s:L.join('\n'),layers,lts};
 }
