@@ -296,6 +296,7 @@ select:focus, input:focus, textarea:focus {
 textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .r3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.r4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
 .field { display: flex; flex-direction: column; }
 .hint { font-size: 10px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
 .ck-row { display: flex; align-items: center; gap: 8px; }
@@ -557,6 +558,7 @@ table.lt tr:hover td { background: rgba(0,145,234,.06); }
 .scard .del-style:hover { color: #e53935; background: rgba(229,57,53,.08); }
 .sprop { display: flex; gap: 8px; margin-bottom: 5px; font-family: var(--mono); font-size: 11px; }
 .sprop .k { color: var(--text2); width: 130px; flex-shrink: 0; font-weight: 700; letter-spacing: .3px; }
+.sprop .k::after { content: ':'; opacity: .4; }
 .sprop .v { color: #7c4dff; font-weight: 600; }
 .sprv {
   margin-top: 10px; padding: 10px 12px;
@@ -577,6 +579,14 @@ table.lt tr:hover td { background: rgba(0,145,234,.06); }
 }
 .dcard h3 { font-family: var(--mono); font-size: 10px; color: var(--tab-styles-color); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
 .dv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+.dv-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text3);
+  font-size: 9px;
+  margin-left: 6px;
+}
 .add-style-btn {
   display: flex;
   align-items: center;
@@ -1633,9 +1643,9 @@ let textStyles=[
   {name:'TAG',   font:'Arial.ttf', height:0, width:0.70, oblique:0},
 ];
 
-// Dim styles — null fields = auto-calculated from scale/units
+// Dim styles — null fields = auto-calculated from scale/units; txtSty null = first text style
 let dimStyles=[
-  {name:'STD-DIM', arrow:'tick', metricDim:false,
+  {name:'STD-DIM', arrow:'tick', dimFormat:'auto', txtSty:null,
    txtH:null, arrowSz:null, extExt:null, extOff:null, dimGap:null}
 ];
 
@@ -1717,23 +1727,49 @@ function getSelectedLTs(state){
   return r;
 }
 
+function resolveDimTxtSty(ds){
+  if(ds && ds.txtSty && textStyles.find(t=>t.name===ds.txtSty)) return ds.txtSty;
+  return textStyles[0] ? textStyles[0].name : 'LABEL';
+}
+
+// Dimension display formats — independent of the drawing's base Units (INSUNITS).
+// DIMLUNIT per Autodesk: 1=Scientific 2=Decimal 3=Engineering 4=Architectural 5=Fractional 6=Windows Desktop
+const DIM_FORMATS = {
+  architectural: {luType:4, dimdec:4, label:'Architectural', sample:"2'-0 1/2\"", imperial:true},
+  fractional:    {luType:5, dimdec:4, label:'Fractional',    sample:'24 1/2"',   imperial:true},
+  engineering:   {luType:3, dimdec:2, label:'Engineering',   sample:"24.04'",    imperial:true},
+  decimal:       {luType:2, dimdec:2, label:'Decimal',       sample:'24.04"',    imperial:true},
+  metric:        {luType:2, dimdec:0, label:'Metric',        sample:'610mm',     imperial:false},
+};
+
+function resolveDimFormat(state, ds){
+  let fmt = ds && ds.dimFormat;
+  if(!fmt) fmt = (ds && ds.metricDim) ? 'metric' : 'auto'; // back-compat with old checkbox
+  if(fmt === 'auto'){
+    if(state.units.startsWith('metric')) return 'metric';
+    if(state.units === 'arch') return 'architectural';
+    return 'decimal'; // dec_in, dec_ft
+  }
+  return fmt;
+}
+
 function calcDimVars(state, ds){
   const sf=state.sf;
-  const useMetric=state.units.startsWith('metric')||(ds&&ds.metricDim);
-  const arch=state.units==='arch'&&!(ds&&ds.metricDim);
+  const fmtKey = resolveDimFormat(state, ds);
+  const fmt = DIM_FORMATS[fmtKey] || DIM_FORMATS.decimal;
   let txtH,arrowSz,extExt,extOff,dimGap;
-  if(useMetric){txtH=2.5;arrowSz=2.5;extExt=2;extOff=2;dimGap=1;}
-  else if(arch){txtH=0.09375;arrowSz=0.09375;extExt=0.0625;extOff=0.0625;dimGap=0.0625;}
-  else{txtH=0.125;arrowSz=0.125;extExt=0.0625;extOff=0.0625;dimGap=0.0625;}
-  const luType=arch?5:2;
-  const dimdec=arch?0:2;
-  const dimfrac=0;
+  if(!fmt.imperial){ txtH=2.5; arrowSz=2.5; extExt=2; extOff=2; dimGap=1; }
+  else if(fmtKey==='architectural'||fmtKey==='fractional'){ txtH=0.09375; arrowSz=0.09375; extExt=0.0625; extOff=0.0625; dimGap=0.0625; }
+  else { txtH=0.125; arrowSz=0.125; extExt=0.0625; extOff=0.0625; dimGap=0.0625; }
+  const luType=fmt.luType;
+  const dimdec=fmt.dimdec;
+  const dimfrac=0; // 0 = horizontal fraction stacking
   const arrow=(ds&&ds.arrow)||'tick';
   const arrBlk={tick:'_Oblique',closed:'_ClosedFilled',dot:'_Dot',open:'_Open'}[arrow];
   // Per-style overrides: empty string or null = keep auto value
   function ov(val){ const n=parseFloat(val); return(!isNaN(n)&&val!==null&&val!=='')?n:null; }
   if(ds){ if(ov(ds.txtH)!==null)txtH=ov(ds.txtH); if(ov(ds.arrowSz)!==null)arrowSz=ov(ds.arrowSz); if(ov(ds.extExt)!==null)extExt=ov(ds.extExt); if(ov(ds.extOff)!==null)extOff=ov(ds.extOff); if(ov(ds.dimGap)!==null)dimGap=ov(ds.dimGap); }
-  return{sf,txtH,arrowSz,extExt,extOff,dimGap,luType,dimdec,dimfrac,arrBlk,useMetric,arch,arrow};
+  return{sf,txtH,arrowSz,extExt,extOff,dimGap,luType,dimdec,dimfrac,arrBlk,arrow,fmtKey,fmtLabel:fmt.label};
 }
 
 function resetOverrides(){layerOverrides={};customLayers=null;refresh();}
@@ -1992,7 +2028,7 @@ function renderStyles(){
     const isFirst=i===0;
     const fontSel=FONT_OPTIONS.map(f=>`<option value="${f.file}"${f.file===ts.font?' selected':''}>${f.label}</option>`).join('');
     html+=`<div class="scard">
-      <h3>Style ${i+1}: ${ts.name}${isFirst?' — used for DIMTXSTY':''}</h3>
+      <h3>Style ${i+1}: ${ts.name}${isFirst?' — default for new dim styles':''}</h3>
       ${textStyles.length>1?`<button class="del-style" onclick="deleteStyle(${i})" title="Remove style">✕</button>`:''}
       <div class="r3" style="gap:8px;margin-bottom:8px">
         <div class="field"><label class="lbl">Name</label>
@@ -2028,54 +2064,69 @@ function renderStyles(){
     const dv=calcDimVars(state,ds);
     const r=n=>Number.isInteger(parseFloat(n))?parseFloat(n).toFixed(1):String(parseFloat(n));
     const arrowOpts=['tick','closed','dot','open'].map(a=>`<option value="${a}"${ds.arrow===a?' selected':''}>${{tick:'Arch Tick',closed:'Closed Filled',dot:'Dot',open:'Open Arrow'}[a]}</option>`).join('');
+    const resolvedTxtSty = (ds.txtSty && textStyles.find(t=>t.name===ds.txtSty)) ? ds.txtSty : (textStyles[0]?textStyles[0].name:'LABEL');
+    const txtStyOpts = textStyles.map(t=>`<option value="${t.name}"${resolvedTxtSty===t.name?' selected':''}>${t.name}</option>`).join('');
+    const curFmt = ds.dimFormat || (ds.metricDim ? 'metric':'auto');
+    const fmtOpts = [
+      ['auto','Auto — match Units'],
+      ['architectural','Architectural — 2&#39;-0 1/2&quot;'],
+      ['engineering','Engineering — 24.04&#39;'],
+      ['decimal','Decimal — 24.04&quot;'],
+      ['fractional','Fractional — 24 1/2&quot;'],
+      ['metric','Metric — 610mm'],
+    ].map(([v,label])=>`<option value="${v}"${curFmt===v?' selected':''}>${label}</option>`).join('');
     const ph=(auto)=>`placeholder="auto: ${auto}"`;
     html+=`<div class="dcard">
       <h3 style="display:flex;align-items:center;justify-content:space-between">
         <span>Dim Style ${i+1}: ${ds.name}</span>
         ${dimStyles.length>1?`<button class="del-style" onclick="deleteDimStyle(${i})" title="Remove dim style" style="position:static;margin-left:8px">✕</button>`:''}
       </h3>
-      <div class="r3" style="gap:8px;margin-bottom:10px">
+      <div class="r4" style="gap:8px;margin-bottom:10px">
         <div class="field"><label class="lbl">Style Name</label>
           <input type="text" value="${ds.name}" oninput="updateDimStyle(${i},'name',this.value)" style="background:rgba(255,255,255,.9)">
         </div>
-        <div class="field"><label class="lbl">Arrow Type</label>
+        <div class="field" title="DIMBLK / arrow style for both ends of dim lines">
+          <label class="lbl">Arrow Type</label>
           <select onchange="updateDimStyle(${i},'arrow',this.value)" style="background:rgba(255,255,255,.9)">${arrowOpts}</select>
         </div>
-        <div class="field"><label class="lbl" style="display:flex;align-items:center;gap:5px">
-          <input type="checkbox" ${ds.metricDim?'checked':''} onchange="updateDimStyle(${i},'metricDim',this.checked)" style="width:auto;margin:0">
-          Force metric format
-        </label></div>
+        <div class="field" title="DIMTXSTY — which text style this dim style labels with">
+          <label class="lbl">Text Style</label>
+          <select onchange="updateDimStyle(${i},'txtSty',this.value)" style="background:rgba(255,255,255,.9)">${txtStyOpts}</select>
+        </div>
+        <div class="field" title="DIMLUNIT/DIMFRAC — how dimension TEXT displays. Independent of the drawing's Units (Drawing Setup) — e.g. an Engineering-unit drawing can still show Architectural-format dimensions on this style.">
+          <label class="lbl">Dim Format</label>
+          <select onchange="updateDimStyle(${i},'dimFormat',this.value)" style="background:rgba(255,255,255,.9)">${fmtOpts}</select>
+        </div>
       </div>
       <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:6px">Override dim variables <span style="font-weight:400;letter-spacing:0">(leave blank to auto-calculate from scale)</span></div>
       <div class="dv-grid">
-        <div class="field"><label class="lbl">DIMTXT</label>
+        <div class="field" title="DIMTXT — Height of dimension text">
+          <label class="lbl">DIMTXT <span class="dv-hint">Text height</span></label>
           <input type="number" value="${ds.txtH??''}" step="0.01" ${ph(r(dv.txtH))} oninput="updateDimStyle(${i},'txtH',this.value)" style="background:rgba(255,255,255,.9)">
         </div>
-        <div class="field"><label class="lbl">DIMASZ (arrow size)</label>
+        <div class="field" title="DIMASZ — Length of the arrowhead or architectural tick">
+          <label class="lbl">DIMASZ <span class="dv-hint">Arrow / tick size</span></label>
           <input type="number" value="${ds.arrowSz??''}" step="0.01" ${ph(r(dv.arrowSz))} oninput="updateDimStyle(${i},'arrowSz',this.value)" style="background:rgba(255,255,255,.9)">
         </div>
-        <div class="field"><label class="lbl">DIMEXE (ext line ext)</label>
+        <div class="field" title="DIMEXE — How far the extension line extends past the dimension line">
+          <label class="lbl">DIMEXE <span class="dv-hint">Ext. line extension</span></label>
           <input type="number" value="${ds.extExt??''}" step="0.01" ${ph(r(dv.extExt))} oninput="updateDimStyle(${i},'extExt',this.value)" style="background:rgba(255,255,255,.9)">
         </div>
-        <div class="field"><label class="lbl">DIMEXO (ext line offset)</label>
+        <div class="field" title="DIMEXO — Gap between the object and the start of the extension line">
+          <label class="lbl">DIMEXO <span class="dv-hint">Ext. line offset</span></label>
           <input type="number" value="${ds.extOff??''}" step="0.01" ${ph(r(dv.extOff))} oninput="updateDimStyle(${i},'extOff',this.value)" style="background:rgba(255,255,255,.9)">
         </div>
-        <div class="field"><label class="lbl">DIMGAP (text gap)</label>
+        <div class="field" title="DIMGAP — Gap between dimension text and the dimension line">
+          <label class="lbl">DIMGAP <span class="dv-hint">Text gap</span></label>
           <input type="number" value="${ds.dimGap??''}" step="0.01" ${ph(r(dv.dimGap))} oninput="updateDimStyle(${i},'dimGap',this.value)" style="background:rgba(255,255,255,.9)">
         </div>
       </div>
       <div class="sprv" style="margin-top:10px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
-          <div class="sprop"><span class="k">DIMSCALE</span><span class="v">${r(dv.sf)}</span></div>
-          <div class="sprop"><span class="k">DIMTXT</span><span class="v">${r(dv.txtH)}</span></div>
-          <div class="sprop"><span class="k">DIMASZ</span><span class="v">${r(dv.arrowSz)}</span></div>
-          <div class="sprop"><span class="k">DIMEXE</span><span class="v">${r(dv.extExt)}</span></div>
-          <div class="sprop"><span class="k">DIMEXO</span><span class="v">${r(dv.extOff)}</span></div>
-          <div class="sprop"><span class="k">DIMGAP</span><span class="v">${r(dv.dimGap)}</span></div>
-          <div class="sprop"><span class="k">DIMLUNIT</span><span class="v">${dv.luType} (${dv.arch?'Arch':dv.useMetric?'Metric':'Decimal'})</span></div>
-          <div class="sprop"><span class="k">Arrow</span><span class="v">${dv.arrow}</span></div>
-          <div class="sprop"><span class="k">DIMTXSTY</span><span class="v">${textStyles[0]?textStyles[0].name:'LABEL'}</span></div>
+          <div class="sprop" title="DIMSCALE — Set globally from the Scale dropdown in Drawing Setup; also drives LTSCALE"><span class="k">DIMSCALE</span><span class="v">${r(dv.sf)}</span></div>
+          <div class="sprop" title="DIMLUNIT — Set by Dim Format above (or auto-derived from Units if Dim Format = Auto)"><span class="k">DIMLUNIT</span><span class="v">${dv.luType} (${dv.fmtLabel})</span></div>
         </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:6px;font-family:var(--mono)">DIMSCALE ↑ comes from the Scale dropdown in Drawing Setup · DIMLUNIT ↑ comes from Dim Format above</div>
       </div>
     </div>`;
   });
@@ -2104,7 +2155,7 @@ function updateDimStyle(i,key,val){
   renderStyles();
 }
 function addDimStyle(){
-  dimStyles.push({name:'DIM-'+(dimStyles.length+1),arrow:'tick',metricDim:false,
+  dimStyles.push({name:'DIM-'+(dimStyles.length+1),arrow:'tick',dimFormat:'auto',txtSty:null,
     txtH:null,arrowSz:null,extExt:null,extOff:null,dimGap:null});
   renderStyles();
 }
@@ -2218,7 +2269,7 @@ function generateLispText(){
   L.push('  ;; Dimension styles ('+dimStyles.length+')');
   dimStyles.forEach((ds,di)=>{
     const dv=calcDimVars(state,ds);
-    L.push('  ;; '+ds.name);
+    L.push('  ;; '+ds.name+'  ('+dv.fmtLabel+' — DIMLUNIT='+dv.luType+')');
     if(di===0){
       L.push('  (setvar "DIMSCALE" '+r(dv.sf)+')');
       L.push('  (setvar "LTSCALE"  '+r(dv.sf)+')');
@@ -2231,7 +2282,7 @@ function generateLispText(){
     L.push('  (setvar "DIMLUNIT" '+parseInt(dv.luType)+')');
     L.push('  (setvar "DIMDEC"   '+parseInt(dv.dimdec)+')');
     L.push('  (setvar "DIMFRAC"  '+parseInt(dv.dimfrac)+')');
-    L.push('  (setvar "DIMTXSTY" '+q(textStyles[0]?textStyles[0].name:'LABEL')+')');
+    L.push('  (setvar "DIMTXSTY" '+q(resolveDimTxtSty(ds))+')');
     L.push('  (setvar "DIMCLRD"  256)');
     L.push('  (setvar "DIMCLRE"  256)');
     L.push('  (setvar "DIMCLRT"  256)');
@@ -2288,7 +2339,7 @@ function generateScrText(){
     s+=sv('DIMTXT',dv.txtH); s+=sv('DIMASZ',dv.arrowSz);
     s+=sv('DIMEXE',dv.extExt); s+=sv('DIMEXO',dv.extOff); s+=sv('DIMGAP',dv.dimGap);
     s+=sv('DIMLUNIT',dv.luType); s+=sv('DIMDEC',dv.dimdec); s+=sv('DIMFRAC',dv.dimfrac);
-    s+=sv('DIMTXSTY',textStyles[0]?textStyles[0].name:'LABEL');
+    s+=sv('DIMTXSTY',resolveDimTxtSty(ds));
     s+=sv('DIMCLRD','256'); s+=sv('DIMCLRE','256'); s+=sv('DIMCLRT','256'); s+=sv('DIMSAH','0');
     if(dv.arrow==='tick') s+=sv('DIMTSZ',dv.arrowSz);
     else{s+=sv('DIMTSZ','0');s+=sv('DIMBLK',dv.arrBlk);}
