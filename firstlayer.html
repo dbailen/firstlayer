@@ -759,7 +759,7 @@ pre.out {
             <div class="r2">
               <div class="field">
                 <label class="lbl">Units</label>
-                <select id="sel-units" onchange="updateScales();refresh()">
+                <select id="sel-units" onchange="updateScales();syncInsunits();refresh()">
                   <option value="arch">Architectural</option>
                   <option value="dec_in">Decimal Inches</option>
                   <option value="dec_ft">Decimal Feet</option>
@@ -771,6 +771,10 @@ pre.out {
                 <label class="lbl">Scale</label>
                 <select id="sel-scale" onchange="refresh()"></select>
               </div>
+            </div>
+            <div class="field" title="INSUNITS — AutoCAD's drawing insertion-unit system variable. Controls automatic scaling of inserted blocks/images/XRefs from differently-unit drawings. Auto-set from Units above, independently editable.">
+              <label class="lbl">Insertion Units (INSUNITS) <span class="dv-hint">for block/XRef scaling</span></label>
+              <select id="sel-insunits" onchange="refresh()"></select>
             </div>
             <div class="field">
               <label class="lbl">Name Case</label>
@@ -1408,6 +1412,37 @@ const SCALE_OPTIONS={
 };
 const UNITS_INSUNITS={arch:1,dec_in:1,dec_ft:2,metric_mm:4,metric_m:6};
 
+// Real AutoCAD INSUNITS codes — used for the directly-editable Insertion Units dropdown.
+// Default selection is synced from the Units dropdown above (via UNITS_INSUNITS),
+// but the user can override independently afterward.
+const INSUNITS_OPTIONS=[
+  [0,'Unitless'],
+  [1,'Inches'],
+  [2,'Feet'],
+  [3,'Miles'],
+  [4,'Millimeters'],
+  [5,'Centimeters'],
+  [6,'Meters'],
+  [7,'Kilometers'],
+  [8,'Microinches'],
+  [9,'Mils'],
+  [10,'Yards'],
+  [11,'Angstroms'],
+  [12,'Nanometers'],
+  [13,'Microns'],
+  [14,'Decimeters'],
+  [15,'Decameters'],
+  [16,'Hectometers'],
+  [17,'Gigameters'],
+  [18,'Astronomical Units'],
+  [19,'Light Years'],
+  [20,'Parsecs'],
+  [21,'US Survey Feet'],
+  [22,'US Survey Inch'],
+  [23,'US Survey Yard'],
+  [24,'US Survey Mile'],
+];
+
 const LW_OPTIONS=['0.00mm','0.05mm','0.09mm','0.13mm','0.18mm','0.25mm','0.35mm','0.50mm','0.70mm','1.00mm','1.40mm','2.00mm'];
 const LT_OPTIONS=['Continuous','HIDDEN','DASHED','CENTER','PHANTOM','DOT'];
 const NO_PLOT_SUFFIXES=['DEFPOINTS','ANNO-VPRT','PAGE-VPRT','PAGE-NOPRINT','XREF','XREF-B','REF-GHOST'];
@@ -1646,7 +1681,7 @@ let textStyles=[
 // Dim styles — null fields = auto-calculated from scale/units; txtSty null = first text style
 let dimStyles=[
   {name:'STD-DIM', arrow:'tick', dimFormat:'auto', txtSty:null,
-   txtH:null, arrowSz:null, extExt:null, extOff:null, dimGap:null}
+   dimScale:null, txtH:null, arrowSz:null, extExt:null, extOff:null, dimGap:null}
 ];
 
 function g(id){return document.getElementById(id)}
@@ -1656,6 +1691,7 @@ function getState(){
     customPfx:g('custom-prefix').value.trim().toUpperCase(),
     industry:g('sel-industry').value,
     units:g('sel-units').value,
+    insunits:parseInt(g('sel-insunits').value)||1,
     sf:parseFloat(g('sel-scale').value)||48,
     scaleLabel:g('sel-scale').options[g('sel-scale').selectedIndex]?.text||'',
     size:g('sel-size').value,
@@ -1754,7 +1790,8 @@ function resolveDimFormat(state, ds){
 }
 
 function calcDimVars(state, ds){
-  const sf=state.sf;
+  function ov(val){ const n=parseFloat(val); return(!isNaN(n)&&val!==null&&val!=='')?n:null; }
+  const sf=(ds&&ov(ds.dimScale)!==null)?ov(ds.dimScale):state.sf;
   const fmtKey = resolveDimFormat(state, ds);
   const fmt = DIM_FORMATS[fmtKey] || DIM_FORMATS.decimal;
   let txtH,arrowSz,extExt,extOff,dimGap;
@@ -1767,7 +1804,6 @@ function calcDimVars(state, ds){
   const arrow=(ds&&ds.arrow)||'tick';
   const arrBlk={tick:'_Oblique',closed:'_ClosedFilled',dot:'_Dot',open:'_Open'}[arrow];
   // Per-style overrides: empty string or null = keep auto value
-  function ov(val){ const n=parseFloat(val); return(!isNaN(n)&&val!==null&&val!=='')?n:null; }
   if(ds){ if(ov(ds.txtH)!==null)txtH=ov(ds.txtH); if(ov(ds.arrowSz)!==null)arrowSz=ov(ds.arrowSz); if(ov(ds.extExt)!==null)extExt=ov(ds.extExt); if(ov(ds.extOff)!==null)extOff=ov(ds.extOff); if(ov(ds.dimGap)!==null)dimGap=ov(ds.dimGap); }
   return{sf,txtH,arrowSz,extExt,extOff,dimGap,luType,dimdec,dimfrac,arrBlk,arrow,fmtKey,fmtLabel:fmt.label};
 }
@@ -1799,6 +1835,14 @@ function updateScales(){
   const sel=g('sel-scale');
   const opts=SCALE_OPTIONS[u]||[];
   sel.innerHTML=opts.map((o,i)=>`<option value="${o.f}"${(u==='arch'&&i===4)||(u!=='arch'&&i===0)?' selected':''}>${o.l}</option>`).join('');
+}
+
+// Populate the Insertion Units (INSUNITS) dropdown with the full real AutoCAD code list,
+// and reset its selection to match the current Units choice. Independently editable afterward.
+function syncInsunits(){
+  const sel=g('sel-insunits');
+  const def=UNITS_INSUNITS[g('sel-units').value]??1;
+  sel.innerHTML=INSUNITS_OPTIONS.map(([code,label])=>`<option value="${code}"${code===def?' selected':''}>${code} — ${label}</option>`).join('');
 }
 
 function tog(head){
@@ -2100,6 +2144,10 @@ function renderStyles(){
       </div>
       <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:6px">Override dim variables <span style="font-weight:400;letter-spacing:0">(leave blank to auto-calculate from scale)</span></div>
       <div class="dv-grid">
+        <div class="field" title="DIMSCALE — Overall scale factor for this dim style. Multiplies DIMTXT/DIMASZ/etc. to convert plotted sizes into model-space size. Defaults to the Scale dropdown in Drawing Setup, but each dim style can carry its own value.">
+          <label class="lbl">DIMSCALE <span class="dv-hint">Overall scale factor</span></label>
+          <input type="number" value="${ds.dimScale??''}" step="1" ${ph(r(state.sf))} oninput="updateDimStyle(${i},'dimScale',this.value)" style="background:rgba(255,255,255,.9)">
+        </div>
         <div class="field" title="DIMTXT — Height of dimension text">
           <label class="lbl">DIMTXT <span class="dv-hint">Text height</span></label>
           <input type="number" value="${ds.txtH??''}" step="0.01" ${ph(r(dv.txtH))} oninput="updateDimStyle(${i},'txtH',this.value)" style="background:rgba(255,255,255,.9)">
@@ -2123,10 +2171,10 @@ function renderStyles(){
       </div>
       <div class="sprv" style="margin-top:10px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
-          <div class="sprop" title="DIMSCALE — Set globally from the Scale dropdown in Drawing Setup; also drives LTSCALE"><span class="k">DIMSCALE</span><span class="v">${r(dv.sf)}</span></div>
+          <div class="sprop" title="DIMSCALE — resolved value for this dim style"><span class="k">DIMSCALE</span><span class="v">${r(dv.sf)}</span></div>
           <div class="sprop" title="DIMLUNIT — Set by Dim Format above (or auto-derived from Units if Dim Format = Auto)"><span class="k">DIMLUNIT</span><span class="v">${dv.luType} (${dv.fmtLabel})</span></div>
         </div>
-        <div style="font-size:9px;color:var(--text3);margin-top:6px;font-family:var(--mono)">DIMSCALE ↑ comes from the Scale dropdown in Drawing Setup · DIMLUNIT ↑ comes from Dim Format above</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:6px;font-family:var(--mono)">DIMSCALE defaults to the Scale dropdown (Drawing Setup) but is overridable above · DIMLUNIT comes from Dim Format above</div>
       </div>
     </div>`;
   });
@@ -2156,7 +2204,7 @@ function updateDimStyle(i,key,val){
 }
 function addDimStyle(){
   dimStyles.push({name:'DIM-'+(dimStyles.length+1),arrow:'tick',dimFormat:'auto',txtSty:null,
-    txtH:null,arrowSz:null,extExt:null,extOff:null,dimGap:null});
+    dimScale:null,txtH:null,arrowSz:null,extExt:null,extOff:null,dimGap:null});
   renderStyles();
 }
 function deleteDimStyle(i){
@@ -2245,7 +2293,7 @@ function generateLispText(){
   L.push('  (setvar "CMDECHO" 0)');
   L.push('');
   if(state.inclUnits){
-    L.push('  (setvar "INSUNITS" '+UNITS_INSUNITS[state.units]+')');
+    L.push('  (setvar "INSUNITS" '+state.insunits+')');
   }
   L.push('');
   if(lts.length){
@@ -2266,14 +2314,14 @@ function generateLispText(){
     L.push('  (su:def-layer '+q(l.name)+' '+l.color+' '+q(lt)+' '+lw+' '+plot+')');
   });
   L.push('');
+  L.push('  ;; LTSCALE — document-wide, from the Scale dropdown in Drawing Setup');
+  L.push('  (setvar "LTSCALE" '+r(state.sf)+')');
+  L.push('');
   L.push('  ;; Dimension styles ('+dimStyles.length+')');
   dimStyles.forEach((ds,di)=>{
     const dv=calcDimVars(state,ds);
     L.push('  ;; '+ds.name+'  ('+dv.fmtLabel+' — DIMLUNIT='+dv.luType+')');
-    if(di===0){
-      L.push('  (setvar "DIMSCALE" '+r(dv.sf)+')');
-      L.push('  (setvar "LTSCALE"  '+r(dv.sf)+')');
-    }
+    L.push('  (setvar "DIMSCALE" '+r(dv.sf)+')');
     L.push('  (setvar "DIMTXT"   '+r(dv.txtH)+')');
     L.push('  (setvar "DIMASZ"   '+r(dv.arrowSz)+')');
     L.push('  (setvar "DIMEXE"   '+r(dv.extExt)+')');
@@ -2293,7 +2341,7 @@ function generateLispText(){
       L.push('  (setvar "DIMTSZ"   0.0)');
       L.push('  (setvar "DIMBLK"   '+q(dv.arrBlk)+')');
     }
-    L.push('  (command "_.-DIMSTYLE" "_S" '+q(ds.name)+' "")');
+    L.push('  (command "_.-DIMSTYLE" "_S" '+q(ds.name)+')');
     L.push('');
   });
   if(state.inclZoom) L.push('  (command "_.ZOOM" "_E")');
@@ -2320,10 +2368,8 @@ function generateScrText(){
   const lp=(...t)=>t.join(' ')+' \n';
   const ln=(...t)=>t.join(' ')+'\n';
   let s='';
-  if(state.inclUnits) s+=sv('INSUNITS',UNITS_INSUNITS[state.units]);
-  // LTSCALE from first dim style
-  const dv0=calcDimVars(state,dimStyles[0]);
-  s+=sv('LTSCALE',dv0.sf);
+  if(state.inclUnits) s+=sv('INSUNITS',state.insunits);
+  s+=sv('LTSCALE',state.sf);
   lts.forEach(lt=>s+=lp('-LINETYPE','L',lt,'ACAD.LIN'));
   textStyles.forEach(ts=>{
     s+=ln('-STYLE',ts.name,ts.font,String(ts.height),String(ts.width),String(ts.oblique),'N','N');
@@ -2335,7 +2381,7 @@ function generateScrText(){
   layers.filter(l=>NO_PLOT_SUFFIXES.includes(l.suffix)).forEach(l=>s+=lp('-LAYER','P','N',l.name));
   dimStyles.forEach((ds,di)=>{
     const dv=calcDimVars(state,ds);
-    if(di===0) s+=sv('DIMSCALE',dv.sf);
+    s+=sv('DIMSCALE',dv.sf);
     s+=sv('DIMTXT',dv.txtH); s+=sv('DIMASZ',dv.arrowSz);
     s+=sv('DIMEXE',dv.extExt); s+=sv('DIMEXO',dv.extOff); s+=sv('DIMGAP',dv.dimGap);
     s+=sv('DIMLUNIT',dv.luType); s+=sv('DIMDEC',dv.dimdec); s+=sv('DIMFRAC',dv.dimfrac);
@@ -2439,6 +2485,7 @@ function savePreset(){
       standard:state.standard,
       industry:state.industry,
       units:state.units,
+      insunits:state.insunits,
       sf:state.sf,
       size:state.size,
       caseStyle:state.caseStyle,
@@ -2468,7 +2515,8 @@ function loadPreset(id){
   // Apply form state
   if(s.standard) g('sel-standard').value=s.standard;
   if(s.industry) g('sel-industry').value=s.industry;
-  if(s.units){g('sel-units').value=s.units;updateScales();}
+  if(s.units){g('sel-units').value=s.units;updateScales();syncInsunits();}
+  if(s.insunits!==undefined) g('sel-insunits').value=String(s.insunits);
   if(s.size) g('sel-size').value=s.size;
   if(s.caseStyle) g('sel-case').value=s.caseStyle;
   if(typeof s.ltHidden==='boolean') g('lt-hidden').checked=s.ltHidden;
@@ -2545,6 +2593,7 @@ function importPresets(e){
 }
 
 updateScales();
+syncInsunits();
 initAciGrid();
 initPaletteBtns();
 showPane('layers');
