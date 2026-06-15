@@ -2216,7 +2216,7 @@ function generateLispText(){
   const state=getState();
   const layers=getLayers(state);
   const lts=getSelectedLTs(state);
-  function q(v){return '"'+v+'"';}
+  function q(v){return '"'+String(v).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';}
   function r(n){const f=parseFloat(n);return Number.isInteger(f)?f.toFixed(1):String(f);}
 
   const L=[];
@@ -2257,7 +2257,7 @@ function generateLispText(){
   L.push('  sname');
   L.push(')');
   L.push('');
-  L.push('(defun su:def-layer (lname color ltype lweight plot / )');
+  L.push('(defun su:def-layer (lname color ltype lweight plot ldesc / )');
   L.push('  (if (null (tblsearch "LAYER" lname))');
   L.push('    (entmake (list');
   L.push('      (cons 0   "LAYER")');
@@ -2268,7 +2268,8 @@ function generateLispText(){
   L.push('      (cons 62  color)');
   L.push('      (cons 6   ltype)');
   L.push('      (cons 370 lweight)');
-  L.push('      (cons 290 plot)))');
+  L.push('      (cons 290 plot)');
+  L.push('      (cons 1   ldesc)))');
   L.push('    (princ (strcat "\\n  skip (exists): " lname))');
   L.push('  )');
   L.push('  lname');
@@ -2305,7 +2306,7 @@ function generateLispText(){
     const lw=lwDxf(l.lw);
     const lt=l.lt||'Continuous';
     const plot=NO_PLOT_SUFFIXES.includes(l.suffix)?0:1;
-    L.push('  (su:def-layer '+q(l.name)+' '+l.color+' '+q(lt)+' '+lw+' '+plot+')');
+    L.push('  (su:def-layer '+q(l.name)+' '+l.color+' '+q(lt)+' '+lw+' '+plot+' '+q(l.desc||'')+')');
   });
   L.push('');
   L.push('  ;; LTSCALE — document-wide, from the Scale dropdown in Drawing Setup');
