@@ -1558,12 +1558,12 @@ const PALETTES = [
   {
     id:'vivid',
     name:'Vivid',
-    desc:'One strong hue per discipline — zero ambiguity. Signal-quality color logic that reads across the room.',
+    desc:'One confident hue per discipline, anchored by a deep navy structure — zero ambiguity, reads across the room.',
     colors:{
-      // Structure — near black (neutral anchor, never competes with systems)
-      'WALL':250,  'COLS':250,  'BEAM':250,  'FNDN':251,  'DECK':252,
-      'BLDG':250,  'PROP':250,  'ROW':250,   'BOOTH':250, 'STAGE':250, 'BARR':251,
-      'DOOR':251,  'GLAZ':252,  'STRS':251,  'CLNG':252,  'ROOF':252,  'SITE':210,
+      // Structure — confident navy (was near-black grey; now a real hue, not grayscale)
+      'WALL':174,  'COLS':174,  'BEAM':174,  'FNDN':252,  'DECK':253,
+      'BLDG':174,  'PROP':174,  'ROW':174,   'BOOTH':174, 'STAGE':174, 'BARR':174,
+      'DOOR':5,    'GLAZ':4,    'STRS':174,  'CLNG':253,  'ROOF':253,  'SITE':210,
       'ROAD':210,  'CURB':210,
       // HVAC — orange
       'DUCT':30,   'MECH':30,
@@ -1581,14 +1581,14 @@ const PALETTES = [
       'RIGG':1,    'TRUSS':30,  'LITE':2,    'AUDIO':5,
       'VIDEO':140, 'POWER':6,   'PYRO':1,
       // Landscape — forest green
-      'LAND':220,  'TOPO':220,  'SURV':250,  'ESMT':9,
+      'LAND':220,  'TOPO':220,  'SURV':174,  'ESMT':9,
       // Secondary elements
-      'FURN':252,  'EQPM':252,  'SEATING':252,'DECO':6,   'BACKLINE':9, 'SIGN':3,
+      'FURN':253,  'EQPM':253,  'SEATING':253,'DECO':6,   'BACKLINE':9, 'SIGN':3,
       // Annotations — dark grey (never competes)
       'ANNO':8,    'DIMS':8,    'TEXT':8,    'NOTE':8,    'SYMB':8,
-      'TTLB':250,  'LEGN':8,    'ZONE':8,
+      'TTLB':174,  'LEGN':8,    'ZONE':8,
       // Hatch / fill
-      'PATT':253,  'HATCH':253,
+      'PATT':254,  'HATCH':254,
       // Safety / demo
       'DEMO':1,    'FIRE':1,
       // No-plot
@@ -1599,41 +1599,35 @@ const PALETTES = [
   {
     id:'editorial',
     name:'Editorial',
-    desc:'Muted sophistication — considered mid-tones for documents that need to look calibrated, not loud.',
+    desc:'Two deliberate anchors — refined navy for structure, warm terracotta for systems. Architecture-monograph color blocking, not a single hue at varying saturation.',
     colors:{
-      // Primary structure — slate blue
-      'WALL':210,  'COLS':210,  'BEAM':210,  'FNDN':251,  'DECK':252,
-      'BLDG':210,  'PROP':210,  'ROW':210,   'BOOTH':210, 'STAGE':210, 'BARR':251,
-      'DOOR':210,  'GLAZ':210,  'STRS':210,  'CLNG':251,  'ROOF':252,  'SITE':210,
-      'ROAD':251,  'RIGG':210,  'TRUSS':210, 'BACKLINE':252,
-      // HVAC — muted ochre
-      'DUCT':50,   'MECH':50,
-      // Plumbing + water — forest green
-      'PIPE':220,  'PLMB':220,  'UTIL-WATR':220, 'UTIL-STRM':210,
-      // Sanitary — warm brown
-      'UTIL-SEWR':50,
-      // Electrical — muted purple
-      'ELEC':140,  'POWER':140, 'UTIL-ELEC':140,
-      // Gas — ochre
-      'UTIL-GAS':50,
-      // Telecom — light purple
-      'UTIL-TELE':150,
-      // Live events — subdued
-      'LITE':50,   'AUDIO':220, 'VIDEO':140,
-      // Landscape
-      'LAND':220,  'TOPO':220,  'ESMT':252,  'SURV':210,
+      // Primary structure — refined navy
+      'WALL':174,  'COLS':174,  'BEAM':174,  'FNDN':252,  'DECK':253,
+      'BLDG':174,  'PROP':174,  'ROW':174,   'BOOTH':174, 'STAGE':174, 'BARR':252,
+      'DOOR':174,  'GLAZ':174,  'STRS':174,  'CLNG':252,  'ROOF':253,  'SITE':174,
+      'ROAD':252,  'RIGG':174,  'TRUSS':174, 'BACKLINE':253,
+      // All systems — warm terracotta / brick (second anchor)
+      'DUCT':24,   'MECH':24,
+      'PIPE':24,   'PLMB':24,   'UTIL-WATR':24, 'UTIL-STRM':174,
+      'UTIL-SEWR':62,
+      'ELEC':34,   'POWER':34,  'UTIL-ELEC':34,
+      'UTIL-GAS':24,
+      'UTIL-TELE':34,
+      'LITE':24,   'AUDIO':174, 'VIDEO':34,
+      // Landscape — forest green (third hue, used sparingly)
+      'LAND':220,  'TOPO':220,  'ESMT':253,  'SURV':174,
       // Secondary elements
-      'FURN':252,  'EQPM':252,  'SEATING':253,'DECO':50,  'SIGN':220,
+      'FURN':253,  'EQPM':253,  'SEATING':254,'DECO':24,  'SIGN':220,
       // Annotations — dark grey
       'ANNO':8,    'DIMS':8,    'TEXT':8,    'NOTE':8,    'SYMB':8,
-      'TTLB':250,  'LEGN':8,    'ZONE':8,    'KEYN':8,
+      'TTLB':174,  'LEGN':8,    'ZONE':8,    'KEYN':8,
       // Hatch / fill
       'PATT':254,  'HATCH':253,
       // Safety / demo — red stays red everywhere
       'DEMO':1,    'FIRE':1,    'PYRO':1,
       // No-plot
       'DEFPOINTS':9, 'VPRT':9, 'XREF':9, 'NOPRINT':253,
-      'DEFAULT':251
+      'DEFAULT':252
     }
   }
 ];
